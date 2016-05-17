@@ -320,7 +320,7 @@ public:
 			RTT::log(RTT::Error) << "set_new_pos = true" << RTT::endlog();
 			// Update specific joints regarding cmd
 			for (unsigned j = 0; j < joints_idx.size(); j++) {
-				gazebo_joints_[joints_idx[j]]->SetAngle(0,
+				gazebo_joints_[joints_idx[j]]->SetPosition(0,
 						jnt_pos_cmd_->rad(j));
 				jnt_pos_brakes_->setFromRad(j, jnt_pos_cmd_->rad(j));
 			}
@@ -330,7 +330,7 @@ public:
 
 		} else if (set_brakes) {
 			for (unsigned j = 0; j < joints_idx.size(); j++)
-				gazebo_joints_[joints_idx[j]]->SetAngle(0,
+				gazebo_joints_[joints_idx[j]]->SetPosition(0,
 						jnt_pos_brakes_->rad(j));
 
 		} else {
