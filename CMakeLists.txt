@@ -16,8 +16,10 @@ message(STATUS "GAZEBO version: ${GAZEBO_VERSION}")
 message(STATUS "GAZEBO_INCLUDE_DIRS: ${GAZEBO_INCLUDE_DIRS}")
 message(STATUS "GAZEBO_LIBRARIES: ${GAZEBO_LIBRARIES}")
 
-set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/eigen/  )
-find_package(Eigen REQUIRED)
+#set ( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/eigen/  )
+#find_package(Eigen REQUIRED)
+set ( Eigen_INCLUDE_DIR /usr/include/eigen3 )
+
 find_package(Boost COMPONENTS thread REQUIRED)
 
 find_package(RCI REQUIRED)
