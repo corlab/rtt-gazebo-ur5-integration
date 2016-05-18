@@ -3,3 +3,6 @@ build/
 *.txt
 !CMakeLists.txt
 *.log
+*.cproject
+*.project
+
