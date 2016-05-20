@@ -50,12 +50,12 @@ public:
 		sim_id = 1;
 
 		//Test angle variation
-		force0 = 0;
-		force1 = 0;
-		force2 = -1;
-		force3 = 0;
-		force4 = 0;
-		force5 = 0;
+		angle0 = 0;
+		angle1 = -0.1;
+		angle2 = 3.14 - (+ angle1 + acos(sin(-angle1)*l1/l2) + 1.57) - 0.3 -0.4;
+		angle3 = -3.14;
+		angle4 = -1.4;
+		angle5 = -1.57;
 
 		l1 = 0.7; // find real values later !!
 		l2 = 0.9;// find real values later !!
@@ -137,12 +137,7 @@ public:
 		}
 
 		data_file.open("/homes/abalayn/workspace/test_data.txt", std::ios::out);
-		gazebo_joints_[joints_idx[0]]->SetPosition(0 , force0);
-				gazebo_joints_[joints_idx[1]]->SetPosition(0 , force1);
-				gazebo_joints_[joints_idx[2]]->SetPosition(0 , force2);
-				gazebo_joints_[joints_idx[3]]->SetPosition(0 , force3);
-				gazebo_joints_[joints_idx[4]]->SetPosition(0 , force4);
-				gazebo_joints_[joints_idx[5]]->SetPosition(0 , force5);
+
 		return true;
 	}
 
@@ -170,9 +165,9 @@ public:
 
 
 
-
+		//angle = fmod((angle + 0.005),3);
 			nb_iteration ++;
-			if (nb_iteration >= 50) // For stabilisation of the torque
+			if (nb_iteration >= 100) // For stabilisation of the torque
 			{
 
 				data_file << "{ sim_id = " << sim_id << " ; ";
@@ -200,12 +195,76 @@ public:
 
 				//gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle2);
 				//RTT::log(RTT::Warning) << angle2 << RTT::endlog();
-				//force0 = 100;
-				//force1 = 100;
+
+	if (angle5 < 3.14)
+	{
+		angle5 = angle5 + 1.17;
+	}
+	else
+	{
+		  if (angle4 < 1.57)
+		  {
+			angle4 = angle4 + 0.7;
+		  }
+		  else
+		  {
+			if ( (angle3 <(0.7)))
+			{
+				angle3 = angle3 + 0.9;
+			}
+			else
+			{
+
+				if (angle1 < 1.57 && angle2 > (3.14 - (+ angle1 + acos(sin(-angle1)*l1/l2) + 1.57) - 3.14 + 0.8))
+				{
+					angle2 = angle2 - 0.3;
+				}
+				else if (angle1 > 1.57 && angle2 > (-3.14 + (- angle1 + 1.7 - acos(cos(-angle1+1.7)*l1/l2))+3.14 - 0.8))
+				{
+					angle2 = angle2 + 0.3;
+				}
+				else
+				{
+					if (angle1 > -2.3)
+					{
+						angle1 = angle1 - 0.4;
+					}
+					else
+					{
+						angle1 = -0.1;
+						if (angle0 >= 6.28)
+						{
+							angle0 = 0;
+						}
+						else
+						{
+							angle0 = angle0 + 1.5;
+						}
+					}
+					if (angle1 < 1.57)
+					{
+						angle2 = 3.14 - (+ angle1 + acos(sin(-angle1)*l1/l2) + 1.57) - 0.3 -0.4;
+					}
+					else
+					{
+						angle2 = -3.14 + (- angle1 + 1.7 - acos(cos(-angle1+1.7)*l1/l2)) + 0.3 +0.4;
+					}
+				}
+				angle3 = -3.14;
+			}
+			angle4 = -1.4;
+				  }
+		  angle5 = -1.57;
+	}
+			gazebo_joints_[joints_idx[0]]->SetPosition(0 , angle0);
+			gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle1);
+			gazebo_joints_[joints_idx[2]]->SetPosition(0 , angle2);
+			gazebo_joints_[joints_idx[3]]->SetPosition(0 , angle3);
+			gazebo_joints_[joints_idx[4]]->SetPosition(0 , angle4);
+			gazebo_joints_[joints_idx[5]]->SetPosition(0 , angle5);
 
 			}
 			// gazebo_joints_[joints_idx[4]]->SetForce(0 , 1000); test -> Works ! position should be set with torques !
-
 	}
 
 	virtual bool configureHook() {
@@ -249,12 +308,12 @@ protected:
 
 
 	// Test : variation of angle for each joint
-	double force0;
-	double force1;
-	double force2;
-	double force3;
-	double force4;
-	double force5;
+	double angle0;
+	double angle1;
+	double angle2;
+	double angle3;
+	double angle4;
+	double angle5;
 
 	double l1; // length of link1
 	double l2;  // length of link2
