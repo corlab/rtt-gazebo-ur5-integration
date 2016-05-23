@@ -35,7 +35,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(2) , pid_it(0), Kp({100 , 100 , 100 , 100 , 100 , 100}) , Kd({10 , 10 , 10 , 10 , 10 , 10}) , Ki({0.01 , 0.01 , 0.01 , 0.01 , 0.01 , 0.01}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -48,14 +48,6 @@ public:
 
 		nb_iteration = 0;
 		sim_id = 1;
-
-		//Test angle variation
-		force0 = 0;
-		force1 = 0;
-		force2 = 0;
-		force3 = 0;
-		force4 = 0;
-		force5 = 0;
 
 		l1 = 0.7; // find real values later !!
 		l2 = 0.9;// find real values later !!
@@ -122,18 +114,23 @@ public:
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
-			//gazebo_joints_[joints_idx[j]]->SetMaxForce(0,10000);
+
+			error_value.push_back(0);
+			cumulative_error.push_back(0);
+			last_error.push_back(0);
+			control_value.push_back(0);
+			target_value.push_back(0);
 
 		}
 
-		controller0 = gazebo::physics::JointController(model);
-		controller1 = gazebo::physics::JointController(model);
+		//controller0 = gazebo::physics::JointController(model);
+		//controller1 = gazebo::physics::JointController(model);
 
 		RTT::log(RTT::Warning) << "PID joints instanciated " << RTT::endlog();
 
-		controller0.AddJoint(gazebo_joints_[joints_idx[0]]);
+		//controller0.AddJoint(gazebo_joints_[joints_idx[0]]);
 		RTT::log(RTT::Warning) << "PID joint0 ok " << RTT::endlog();
-		controller1.AddJoint(gazebo_joints_[joints_idx[1]]);
+		//controller1.AddJoint(gazebo_joints_[joints_idx[1]]);
 		RTT::log(RTT::Warning) << "PID joint1 ok " << RTT::endlog();
 		data_file.open("/homes/abalayn/workspace/test_data.txt", std::ios::out);
 
@@ -147,25 +144,95 @@ public:
 		if (model.get() == NULL) {
 			return;
 		}
+		nb_iteration++;
 
+		if (nb_iteration >= 5000) // For stabilisation of the torque
+					{
+			nb_iteration = 0;
 
+		if (target_value[5] < 3.14)
+			{
+			target_value[5] = target_value[5] + 1.17;
+			}
+			else
+			{
+				  if (target_value[4] < 1.57)
+				  {
+					  target_value[4] = target_value[4] + 0.7;
+				  }
+				  else
+				  {
+					if ( (target_value[3] <(0.7)))
+					{
+						target_value[3] = target_value[3] + 0.9;
+					}
+					else
+					{
 
+						if (target_value[1] < 1.57 && target_value[2] > (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8))
+						{
+							target_value[2] = target_value[2] - 0.3;
+						}
+						else if (target_value[1] > 1.57 && target_value[2] > (-3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2))+3.14 - 0.8))
+						{
+							target_value[2] = target_value[2] + 0.3;
+						}
+						else
+						{
+							if (target_value[1] > -2.3)
+							{
+								target_value[1] = target_value[1] - 0.4;
+							}
+							else
+							{
+								target_value[1] = -0.1;
+								if (target_value[0] >= 6.28)
+								{
+									target_value[0] = 0;
+								}
+								else
+								{
+									target_value[0] = target_value[0] + 1.5;
+								}
+							}
+							if (target_value[1] < 1.57)
+							{
+								target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+							}
+							else
+							{
+								target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+							}
+						}
+						target_value[3] = -3.14;
+					}
+					target_value[4] = -1.4;
+						  }
+				  target_value[5] = -1.57;
+			}
+					}
+			pid_it++;
 
-		// Position of each joint (in radian)
-			//gazebo_joints_[joints_idx[0]]->SetPosition(0 , -0);
-			//angle1 = -0.5;
-			//gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle1);
-			//angle2 = 3.14 - (+ angle1 + acos(sin(-angle1)*l1/l2) + 1.57); // OK (just subb pi)! for angle1 small
-			//angle2 = -3.14 + (- angle1 + 1.7 - acos(cos(-angle1+1.7)*l1/l2)); // Ok for big angle1 (add pi)
-			//angle2= -0.7;
-			//gazebo_joints_[joints_idx[2]]->SetPosition(0 , angle2);
-			//gazebo_joints_[joints_idx[3]]->SetPosition(0 , -1.55);
-			//gazebo_joints_[joints_idx[4]]->SetPosition(0 , -0);
-			//gazebo_joints_[joints_idx[5]]->SetPosition(0 , -0);
-
-
-
-
+			// Error : target value = 0 everywhere
+			// PID control of position with torque
+			if (pid_it >= dynStepSize)
+			{
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					//target_value[j] = -1.5;
+					error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+					control_value[j] = error_value[j]*Kp[j];
+					cumulative_error[j] = cumulative_error[j] + error_value[j];
+					control_value[j] = control_value[j] + cumulative_error[j]*Ki[j]*dynStepSize;
+					control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
+					last_error[j] = error_value[j];
+					pid_it = 0;
+				}
+			}
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
+			}
 
 			nb_iteration ++;
 			if (nb_iteration >= 50) // For stabilisation of the torque
@@ -180,6 +247,11 @@ public:
 					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
 					data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
+					data_file << "trg_agl "	<<target_value[j] << " ; ";
+				}
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					data_file << "ctrl "	<< control_value[j] << " ; ";
 				}
 				data_file << " }" << std::endl;
 				//angle = fmod((angle - 0.005),2.5);
@@ -190,21 +262,11 @@ public:
 
 				// Change values of angles to collect data for the simulation.
 
-
-
-
 			}
-			/*
-			 gazebo_joints_[joints_idx[0]]->SetForce(0 , 10000);
-			 gazebo_joints_[joints_idx[1]]->SetForce(0 , 0);
-			 gazebo_joints_[joints_idx[2]]->SetForce(0 , 0);
-			 gazebo_joints_[joints_idx[3]]->SetForce(0 , 0);
-			 gazebo_joints_[joints_idx[4]]->SetForce(0 , 0);
-			 gazebo_joints_[joints_idx[5]]->SetForce(0 , 0);
-			 */
 
-			controller0.SetJointPosition(joint_names_[joints_idx[0]] , 3); // does the torque changes ??
-			controller1.SetJointPosition(joint_names_[joints_idx[1]], -2);
+
+			//controller0.SetJointPosition(model->GetJoints()[joints_idx[0]] , 3); // does the torque changes ??
+			//controller1.SetJointPosition(model->GetJoints()[joints_idx[1]], -2);
 
 			//controller0.SetPositionTarget(joint_names_[joints_idx[0]] , 3);
 			//controller1.SetPositionTarget(joint_names_[joints_idx[1]], -2);
@@ -246,21 +308,44 @@ protected:
 	std::string urdf_string;
 
 
-	// Test : variation of angle for each joint
-	double force0;
-	double force1;
-	double force2;
-	double force3;
-	double force4;
-	double force5;
 
 	double l1; // length of link1
 	double l2;  // length of link2
 
 	gazebo::physics::JointController controller0;
 	gazebo::physics::JointController controller1;
+
+
+	// Variables for PID controller : transform to vector for several joints.
+	std::vector<double> error_value;
+	std::vector<double> cumulative_error;
+	std::vector<double> last_error;
+	double dynStepSize;
+	std::vector<double> Kp;
+	std::vector<double> Kd;
+	std::vector<double> Ki;
+	std::vector<double> control_value;
+	std::vector<double> target_value;
+	int pid_it;
+
+	/* Parameters for PID controller
+	 * Joint 0 :
+	 * Kp(100) , Kd(10) , Ki(0.01)
+	 *
+	 * Joint 1 :
+	 * Kp(100) , Kd(10) , Ki(0.01)
+	 *
+	 * Joint 2 :
+	 * Kp(100) , Kd(10) , Ki(0.01)
+	 *
+	 * Joint 3 : // To test when other joints set to position.
+	 *
+	 */
+
+
 };
 
 ORO_LIST_COMPONENT_TYPE(UR5RttGazeboComponent)
 ORO_CREATE_COMPONENT_LIBRARY();
+
 
