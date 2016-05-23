@@ -35,7 +35,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , last_update_time_(0)  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -126,16 +126,28 @@ public:
 
 		}
 
-		controller0 = gazebo::physics::JointController(model);
-		controller1 = gazebo::physics::JointController(model);
 
-		RTT::log(RTT::Warning) << "PID joints instanciated " << RTT::endlog();
+		// Passing world model to JointController Pointer
+		this->JCon.reset(new gazebo::physics::JointController(model));
 
-		controller0.AddJoint(gazebo_joints_[joints_idx[0]]);
-		RTT::log(RTT::Warning) << "PID joint0 ok " << RTT::endlog();
-		controller1.AddJoint(gazebo_joints_[joints_idx[1]]);
-		RTT::log(RTT::Warning) << "PID joint1 ok " << RTT::endlog();
-		data_file.open("/homes/abalayn/workspace/test_data.txt", std::ios::out);
+	    for(int i=0; i < 5; i++){
+			RTT::log(RTT::Warning) << "Index " << i << RTT::endlog();
+			RTT::log(RTT::Warning) << "Joint Name " << joint_names_[joints_idx[i]] << RTT::endlog();
+
+			JPtrs[i] = model->GetJoint(joint_names_[joints_idx[i]]);
+
+			RTT::log(RTT::Warning) << "Joint Pointer " << JPtrs[i]->GetName() << RTT::endlog();
+			RTT::log(RTT::Warning) << "Adding Joint " << RTT::endlog();
+
+	        JCon->AddJoint(JPtrs[i]);
+	        JCon->SetPositionPID(JPtrs[i]->GetScopedName(),gazebo::common::PID(100, 0.1, 10));
+
+	    }
+		JCon->SetPositionTarget(JPtrs[1]->GetScopedName(),3.14);
+		JCon->Update();
+
+		RTT::log(RTT::Warning) << "PID controllers instanciated " << RTT::endlog();
+		data_file.open("/homes/mwojtynek/workspace/test_data.txt", std::ios::out);
 
 
 
@@ -203,8 +215,22 @@ public:
 			 gazebo_joints_[joints_idx[5]]->SetForce(0 , 0);
 			 */
 
-			controller0.SetJointPosition(joint_names_[joints_idx[0]] , 3); // does the torque changes ??
-			controller1.SetJointPosition(joint_names_[joints_idx[1]], -2);
+
+			/*
+			RTT::log(RTT::Warning) << "PID Stuff " << RTT::endlog();
+
+			pid.Init();
+
+			pid.SetDGain(10.0);
+			pid.SetIGain(0.01);
+			pid.SetPGain(100.0);
+			RTT::log(RTT::Warning) << "PID SetPosition for PID " << RTT::endlog();
+			controller0.SetPositionPID( model->GetScopedName() , pid);
+			RTT::log(RTT::Warning) << "PID SetPosition for PID over " << RTT::endlog();
+*/
+//			controller0.SetJointPosition(joint_names_[joints_idx[0]] , 3); // does the torque changes ??
+//			controller1.SetJointPosition(joint_names_[joints_idx[1]], -2);
+
 
 			//controller0.SetPositionTarget(joint_names_[joints_idx[0]] , 3);
 			//controller1.SetPositionTarget(joint_names_[joints_idx[1]], -2);
@@ -257,8 +283,10 @@ protected:
 	double l1; // length of link1
 	double l2;  // length of link2
 
-	gazebo::physics::JointController controller0;
-	gazebo::physics::JointController controller1;
+	// PID Controller
+	gazebo::physics::JointControllerPtr JCon;
+	gazebo::physics::JointPtr JPtrs[5];
+	gazebo::common::PID pid;
 };
 
 ORO_LIST_COMPONENT_TYPE(UR5RttGazeboComponent)
