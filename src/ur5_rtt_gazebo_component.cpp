@@ -35,7 +35,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , last_update_time_(0) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -52,7 +52,7 @@ public:
 		//Test angle variation
 		force0 = 0;
 		force1 = 0;
-		force2 = -1;
+		force2 = 0;
 		force3 = 0;
 		force4 = 0;
 		force5 = 0;
@@ -60,10 +60,6 @@ public:
 		l1 = 0.7; // find real values later !!
 		l2 = 0.9;// find real values later !!
 
-		this->provides("debug")->addAttribute("jnt_pos", jnt_pos_);
-		this->provides("debug")->addAttribute("jnt_vel", jnt_vel_);
-		this->provides("debug")->addAttribute("jnt_trq", jnt_trq_);
-		this->provides("misc")->addAttribute("urdf_string", urdf_string);
 
 	}
 
@@ -74,7 +70,6 @@ public:
 			std::cout << "No model could be loaded" << RTT::endlog();
 			return false;
 		}
-
 
 
 		// Get the joints
@@ -121,28 +116,29 @@ public:
 				<< " joints " << RTT::endlog();
 
 
-		jnt_pos_ = rci::JointAngles::create(7, 0.0);
-
-		jnt_trq_ = rci::JointTorques::create(7, 0.0);
-
-		jnt_vel_ = rci::JointVelocities::create(7, 0.0);
-
-
 		last_update_time_ = RTT::os::TimeService::Instance()->getNSecs(); //rtt_rosclock::rtt_now(); // still needed??
 		RTT::log(RTT::Warning) << "Done configuring gazebo" << RTT::endlog();
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
+			//gazebo_joints_[joints_idx[j]]->SetMaxForce(0,10000);
+
 		}
 
+		controller0 = gazebo::physics::JointController(model);
+		controller1 = gazebo::physics::JointController(model);
+
+		RTT::log(RTT::Warning) << "PID joints instanciated " << RTT::endlog();
+
+		controller0.AddJoint(gazebo_joints_[joints_idx[0]]);
+		RTT::log(RTT::Warning) << "PID joint0 ok " << RTT::endlog();
+		controller1.AddJoint(gazebo_joints_[joints_idx[1]]);
+		RTT::log(RTT::Warning) << "PID joint1 ok " << RTT::endlog();
 		data_file.open("/homes/abalayn/workspace/test_data.txt", std::ios::out);
-		gazebo_joints_[joints_idx[0]]->SetPosition(0 , force0);
-				gazebo_joints_[joints_idx[1]]->SetPosition(0 , force1);
-				gazebo_joints_[joints_idx[2]]->SetPosition(0 , force2);
-				gazebo_joints_[joints_idx[3]]->SetPosition(0 , force3);
-				gazebo_joints_[joints_idx[4]]->SetPosition(0 , force4);
-				gazebo_joints_[joints_idx[5]]->SetPosition(0 , force5);
+
+
+
 		return true;
 	}
 
@@ -179,15 +175,11 @@ public:
 
 				for (unsigned j = 0; j < joints_idx.size(); j++)
 				{
-					data_file << "joint = " << j << " ; ";
+					data_file << "jnt " << j << " ; ";
 					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
 					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-					//data_file << "torque parent 1 = "<< w1.body1Torque << std::endl;
-					//data_file << "torque child 1 = "<< w1.body2Torque << std::endl;
-					jnt_trq_->setFromNm(1, a1.Dot(w1.body1Torque));
-					data_file << "trq = "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
-					data_file << "trq2 = "<< a1.Dot(w1.body2Torque) << " ; "; // See torque computation !!
-					data_file << "angle = "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
+					data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
+					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 				}
 				data_file << " }" << std::endl;
 				//angle = fmod((angle - 0.005),2.5);
@@ -198,13 +190,24 @@ public:
 
 				// Change values of angles to collect data for the simulation.
 
-				//gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle2);
-				//RTT::log(RTT::Warning) << angle2 << RTT::endlog();
-				//force0 = 100;
-				//force1 = 100;
+
+
 
 			}
-			// gazebo_joints_[joints_idx[4]]->SetForce(0 , 1000); test -> Works ! position should be set with torques !
+			/*
+			 gazebo_joints_[joints_idx[0]]->SetForce(0 , 10000);
+			 gazebo_joints_[joints_idx[1]]->SetForce(0 , 0);
+			 gazebo_joints_[joints_idx[2]]->SetForce(0 , 0);
+			 gazebo_joints_[joints_idx[3]]->SetForce(0 , 0);
+			 gazebo_joints_[joints_idx[4]]->SetForce(0 , 0);
+			 gazebo_joints_[joints_idx[5]]->SetForce(0 , 0);
+			 */
+
+			controller0.SetJointPosition(joint_names_[joints_idx[0]] , 3); // does the torque changes ??
+			controller1.SetJointPosition(joint_names_[joints_idx[1]], -2);
+
+			//controller0.SetPositionTarget(joint_names_[joints_idx[0]] , 3);
+			//controller1.SetPositionTarget(joint_names_[joints_idx[1]], -2);
 
 	}
 
@@ -235,11 +238,6 @@ protected:
 	std::vector<std::string> joint_names_;
 
 
-	rci::JointAnglesPtr  jnt_pos_;
-	rci::JointTorquesPtr jnt_trq_;
-	rci::JointVelocitiesPtr jnt_vel_;
-
-
 	RTT::nsecs last_update_time_;
 
 	int nb_static_joints;
@@ -258,6 +256,9 @@ protected:
 
 	double l1; // length of link1
 	double l2;  // length of link2
+
+	gazebo::physics::JointController controller0;
+	gazebo::physics::JointController controller1;
 };
 
 ORO_LIST_COMPONENT_TYPE(UR5RttGazeboComponent)

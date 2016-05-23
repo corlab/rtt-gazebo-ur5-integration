@@ -257,12 +257,13 @@ public:
 		  angle5 = -1.57;
 	}
 			gazebo_joints_[joints_idx[0]]->SetPosition(0 , angle0);
-			gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle1);
+			//gazebo_joints_[joints_idx[1]]->SetPosition(0 , angle1);
 			gazebo_joints_[joints_idx[2]]->SetPosition(0 , angle2);
 			gazebo_joints_[joints_idx[3]]->SetPosition(0 , angle3);
 			gazebo_joints_[joints_idx[4]]->SetPosition(0 , angle4);
 			gazebo_joints_[joints_idx[5]]->SetPosition(0 , angle5);
 
+			gazebo_joints_[joints_idx[1]]->SetAngle(0 , angle1);
 			}
 			// gazebo_joints_[joints_idx[4]]->SetForce(0 , 1000); test -> Works ! position should be set with torques !
 	}
