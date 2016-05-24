@@ -51,7 +51,7 @@ wrist_3_joint: {p: 100.0, i: 0.0, d: 0.0, i_clamp: 0.0}
 	// Kp({100 , 1500 , 10000 , 100 , 100 , 100}) , Ki({0.01 , 500 , 70 , 0 , 0 , 0}) , Kd({10, 200 , 100 , 0 , 0 , 0})
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5), Kp({100 , 800 , 100 , 100 , 100 , 100}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 10 , 10 , 10}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , last_update_time_(0) , controller0(NULL) , controller1(NULL) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5), Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
