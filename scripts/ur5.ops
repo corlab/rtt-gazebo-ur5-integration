@@ -12,57 +12,27 @@ import("RTTController")
 ur5_gazebo.configure()
 ur5_gazebo.start()
 
-/*
+
+
+
 // #######------- lwr_osf_controller : RttLwrOSFController -------#######
-loadComponent("lwr_osf_controller","RttLwrOSFController");
-lwr_osf_controller.parseURDFforKDL(lwr_gazebo.misc.urdf_string)
-setActivity("lwr_osf_controller",0.001,HighestPriority,ORO_SCHED_RT)
+loadComponent("pid_component","PIDController");
+//lwr_osf_controller.parseURDFforKDL(lwr_gazebo.misc.urdf_string)
+setActivity("pid_component",0.0005,HighestPriority,ORO_SCHED_RT)
 
 
 // # Connect Controller to Gazebo
 var ConnPolicy cp_ctrl_gz;
 
-connect("lwr_osf_controller.cmdJntPos","lwr_gazebo.JointPositionCommand",cp_ctrl_gz);
-connect("lwr_osf_controller.cmdJntTrq","lwr_gazebo.JointTorqueCommand",cp_ctrl_gz);
+connect("pid_component.cmdJntTrq","ur5_gazebo.JointTorqueCommand",cp_ctrl_gz);
 
-connect("lwr_gazebo.JointPosition","lwr_osf_controller.currJntPos",cp_ctrl_gz);
-connect("lwr_gazebo.JointTorque","lwr_osf_controller.currJntTrq",cp_ctrl_gz);
-connect("lwr_gazebo.JointVelocity","lwr_osf_controller.currJntVel",cp_ctrl_gz);
+connect("ur5_gazebo.JointPosition","pid_component.currJntPos",cp_ctrl_gz);
+connect("ur5_gazebo.JointTorque","pid_component.currJntTrq",cp_ctrl_gz);
+connect("ur5_gazebo.JointVelocity","pid_component.currJntVel",cp_ctrl_gz);
 
 
-// setting a single property
-// define khatib gains
-// define specification
-set lwr_osf_controller.use_original_khatib_controller = 0;
-set lwr_osf_controller.use_euler_orientation = 1;
 
-// define khatib gains
-set lwr_osf_controller.Kp_cartTranslationKhatibGain = 50;
-set lwr_osf_controller.Kd_cartTranslationKhatibGain = 14;
-set lwr_osf_controller.Kp_cartOrientationEulerKhatibGain = 2500;
-set lwr_osf_controller.Kd_cartOrientationEulerKhatibGain = 100;
-set lwr_osf_controller.Kp_cartOrientationQuaternionKhatibGain = 72;
-set lwr_osf_controller.Kd_cartOrientationQuaternionKhatibGain = 100; // here the rule 2*sqrt() does not make sense because of different comparisons
-set lwr_osf_controller.Kp_jointKhatibGain = 20;
-set lwr_osf_controller.Kd_jointKhatibGain = 6;
+pid_component.configure()
+pid_component.start()
 
-// define constrained projection gains
-set lwr_osf_controller.Kp_cartTranslationConstrainedGain = 200;
-set lwr_osf_controller.Kd_cartTranslationConstrainedGain = 20;
-set lwr_osf_controller.Kp_cartOrientationEulerConstrainedGain = 1000;
-set lwr_osf_controller.Kd_cartOrientationEulerConstrainedGain = 77;
-set lwr_osf_controller.Kp_cartOrientationQuaternionConstrainedGain = 0;
-set lwr_osf_controller.Kd_cartOrientationQuaternionConstrainedGain = 0;
-set lwr_osf_controller.Kp_jointConstrainedGain = 20;
-set lwr_osf_controller.Kd_jointConstrainedGain = 6;
 
-// setting an array of properties
-//for (var int indx = 0; indx < 10; set indx = indx +1 )
-//{
-//    set lwr_osf_controller.tenGains[indx] = 77;
-//}
-
-lwr_osf_controller.configure()
-lwr_osf_controller.start()
-
-*/

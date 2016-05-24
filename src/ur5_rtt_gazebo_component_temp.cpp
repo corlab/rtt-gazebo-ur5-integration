@@ -26,7 +26,7 @@
 #include <iostream>
 #include <math.h>
 
-//#include "ur5_rtt_gazebo_component.hpp"
+#include "ur5_rtt_gazebo_component_temp.hpp"
 
 using namespace std;
 
@@ -34,22 +34,16 @@ using namespace std;
 
 
 
-class UR5RttGazeboComponent: public RTT::TaskContext {
-public:
 
-
-	// Kp({100 , 800 , 100 , 100 , 100 , 100}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 10000 , 10 , 10 , 10 , 10})
-	// Kp({100 , 1500 , 10000 , 100 , 100 , 100}) , Ki({0.01 , 500 , 70 , 0 , 0 , 0}) , Kd({10, 200 , 100 , 0 , 0 , 0})
-	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(
-					0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5), Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
-			 {
+UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
+			RTT::TaskContext(name), nb_static_joints(0) , trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(0)
+	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
-				&UR5RttGazeboComponent::gazeboConfigureHook, this,
+				&gazeboConfigureHook, this,
 				RTT::ClientThread);
 		this->provides("gazebo")->addOperation("update",
-				&UR5RttGazeboComponent::gazeboUpdateHook, this, RTT::ClientThread);
+				&gazeboUpdateHook, this, RTT::ClientThread);
 
 		nb_iteration = 0;
 		sim_id = 1;
@@ -60,7 +54,7 @@ public:
 	}
 
 	//! Called from gazebo
-	virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model) {
+	virtual bool UR5RttGazeboComponent::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
 		if (model.get() == NULL) {
 			RTT::log(RTT::Error) << "No model could be loaded" << RTT::endlog();
 			std::cout << "No model could be loaded" << RTT::endlog();
@@ -112,13 +106,6 @@ public:
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
-
-			error_value.push_back(0);
-			cumulative_error.push_back(0);
-			last_error.push_back(0);
-			control_value.push_back(0);
-			target_value.push_back(0);
-
 		}
 
 		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
@@ -126,21 +113,38 @@ public:
 			RTT::log(RTT::Error) << "The file could not be opened." << RTT::endlog();
 
 
-		target_value[0] = 0 ;
-		target_value[1] = -0.3 ;
-		target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
-		target_value[3] = -3.14;
-		target_value[4] = -1.4;
-		target_value[5] = -1.57;
+
+		this->addPort("cmdJntTrq", cmdJntTrq_Port);
+		trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
+
+		this->addPort("currJntPos", currJntPos_Port);
+		currJntPos_Port.setDataSample(trqCmdOutput);
+		this->addPort("refJntPos", refJntPos_Port);
+		refJntPos_Port.setDataSample(trqCmdOutput);
+
+		targetPosition[0] = 0 ;
+		targetPosition[1] = -0.3 ;
+		targetPosition[2] = 3.14 - (+ targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 0.3 -0.4;
+		targetPosition[3] = -3.14;
+		targetPosition[4] = -1.4;
+		targetPosition[5] = -1.57;
 
 		return true;
 	}
 
 	//! Called from Gazebo
-	virtual void gazeboUpdateHook(gazebo::physics::ModelPtr model) {
+	virtual void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
 		if (model.get() == NULL) {
 			return;
 		}
+			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]/dynStepSize);
+			}
+
+			sim_id ++;
+
 		nb_iteration++;
 
 		if (nb_iteration >= 80000) // For stabilisation of the torque.
@@ -151,74 +155,76 @@ public:
 			// Changes desired position  of each joint.
 
 			/*// To make the target values of the joints change.
-			if (target_value[5] < 3.14)
+			if (targetPosition[5] < 3.14)
 			{
-				target_value[5] = target_value[5] + 1.17;
+				targetPosition[5] = target_value[5] + 1.17;
 			}
 			else
 			{
-				if (target_value[4] < 1.57)
+				if (targetPosition[4] < 1.57)
 				{
-					target_value[4] = target_value[4] + 0.7;
+					targetPosition[4] = targetPosition[4] + 0.7;
 				}
 				else
 				{
-					if ( (target_value[3] <(0.7)))
+					if ( (targetPosition[3] <(0.7)))
 					{
-						target_value[3] = target_value[3] + 0.9;
+						targetPosition[3] = targetPosition[3] + 0.9;
 					}
 					else
 					{
-						if (target_value[1] < 1.57 && target_value[2] > (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8))
+						if (targetPosition[1] < 1.57 && targetPosition[2] > (3.14 - (+targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 3.14 + 0.8))
 						{
-							target_value[2] = target_value[2] - 0.3;
+							targetPosition[2] = targetPosition[2] - 0.3;
 						}
-						else if (target_value[1] > 1.57 && target_value[2] > (-3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2))+3.14 - 0.8))
+						else if (targetPosition[1] > 1.57 && targetPosition[2] > (-3.14 + (- targetPosition[1] + 1.7 - acos(cos(-targetPosition[1]+1.7)*l1/l2))+3.14 - 0.8))
 						{
-							target_value[2] = target_value[2] + 0.3;
+							targetPosition[2] = targetPosition[2] + 0.3;
 						}
 						else
 						{
-							if (target_value[1] > -2.3)
+							if (targetPosition[1] > -2.3)
 							{
-								target_value[1] = target_value[1] - 0.4;
+								targetPosition[1] = targetPosition[1] - 0.4;
 							}
 							else
 							{
-								target_value[1] = -0.1;
+								targetPosition[1] = -0.1;
 
 
-								if (target_value[0] >= 6.28)
+								if (targetPosition[0] >= 6.28)
 								{
-									target_value[0] = 0;
+									targetPosition[0] = 0;
 								}
 								else
 								{
-									target_value[0] = target_value[0] + 1.5;
+									targetPosition[0] = targetPosition[0] + 1.5;
 								}
 
 							}
-									if (target_value[1] < 1.57)
+									if (targetPosition[1] < 1.57)
 							{
-								target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+								targetPosition[2] = 3.14 - (+ targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 0.3 -0.4;
 							}
 							else
 							{
-								target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+								targetPosition[2] = -3.14 + (- targetPosition[1] + 1.7 - acos(cos(-targetPosition[1]+1.7)*l1/l2)) + 0.3 +0.4;
 							}
 						}
-						target_value[3] = -3.14;
+						targetPosition[3] = -3.14;
 					}
-					target_value[4] = -1.4;
+					targetPosition[4] = -1.4;
 				}
-				target_value[5] = -1.57;
+				targetPosition[5] = -1.57;
 			}*/
+
+
 		}
 
-		pid_it++;
+
 
 		// PID control of position with torque
-		if (pid_it >= dynStepSize)
+		if (sim_id % 100 == 0)
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -231,30 +237,22 @@ public:
 								gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
 								data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
 								data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
-								data_file << "trg_agl "	<<target_value[j] << " ; ";
+								data_file << "trg_agl "	<<targetPosition[j] << " ; ";
 							}
 							for (unsigned j = 0; j < joints_idx.size(); j++)
 							{
-								data_file << "ctrl "	<< control_value[j] << " ; ";
+								data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
 							}
 							data_file << " }" << std::endl;
-				error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-				control_value[j] = error_value[j]*Kp[j];
-				cumulative_error[j] = cumulative_error[j] + error_value[j];
-				control_value[j] = control_value[j] + cumulative_error[j]*Ki[j]*dynStepSize;
-				control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
-				last_error[j] = error_value[j];
-				pid_it = 0;
 			}
 		}
 
-		for (unsigned j = 0; j < joints_idx.size(); j++)
-		{
-			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
-			//gazebo_joints_[joints_idx[j]]->SetPosition(0 , target_value[j]);
-		}
-
-		sim_id ++;
+		if (currJntPos_Port.connected()) {
+			currJntPos_Port.write(currPosition);
+		    }
+		if (refJntPos_Port.connected()) {
+			refJntPos_Port.write(targetPosition);
+				    }
 
 	}
 
@@ -263,12 +261,12 @@ public:
 	    return true;
 	}
 
-	virtual bool configureHook() {
+	virtual bool UR5RttGazeboComponent::configureHook() {
 		return true;
 	}
 
 
-	virtual void updateHook() {
+	virtual void UR5RttGazeboComponent::updateHook() {
 		return;
 	}
 
@@ -279,42 +277,6 @@ public:
 	void UR5RttGazeboComponent::cleanupHook() {
 		return ;
 	}
-protected:
-
-	//! Synchronization ??
-
-	// File where data are written.
-	std::ofstream data_file;
-
-	int nb_iteration; // number of hook iterations for one tested position.
-	int sim_id; // number of angle positions tested.
-
-	std::vector<int> joints_idx;
-
-	std::vector<gazebo::physics::JointPtr> gazebo_joints_;
-	gazebo::physics::Link_V model_links_;
-	std::vector<std::string> joint_names_;
-
-
-	int nb_static_joints;
-
-	double l1; // length of link1
-	double l2;  // length of link2
-
-
-	// Variables for PID controller : transform to vector for several joints.
-	std::vector<double> error_value;
-	std::vector<double> cumulative_error;
-	std::vector<double> last_error;
-	double dynStepSize;
-	std::vector<double> Kp;
-	std::vector<double> Kd;
-	std::vector<double> Ki;
-	std::vector<double> control_value;
-	std::vector<double> target_value;
-	int pid_it;
-
-};
 
 ORO_LIST_COMPONENT_TYPE(UR5RttGazeboComponent)
 ORO_CREATE_COMPONENT_LIBRARY();
