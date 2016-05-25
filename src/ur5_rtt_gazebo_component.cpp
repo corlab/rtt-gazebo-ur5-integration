@@ -40,9 +40,12 @@ public:
 
 	// Kp({100 , 800 , 100 , 100 , 100 , 100}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 10000 , 10 , 10 , 10 , 10})
 	// Kp({100 , 1500 , 10000 , 100 , 100 , 100}) , Ki({0.01 , 500 , 70 , 0 , 0 , 0}) , Kd({10, 200 , 100 , 0 , 0 , 0})
+	// Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) (best for now)
+	// ok values Kp({10000 , 10000 , 10000 , 100 , 100 , 100}) , Ki({0 , 0 , 0 , 0.0 , 0.0 , 0.0}) , Kd({200 ,200 , 200 , 0.1 , 0.1 , 0.1}
+	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5), Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5), Kp({250 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({0 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({0 ,209250 , 209250 , 209250 , 209250 , 209250}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -143,14 +146,25 @@ public:
 		}
 		nb_iteration++;
 
-		if (nb_iteration >= 80000) // For stabilisation of the torque.
+		if (nb_iteration >= 5000) // For stabilisation of the torque.
+		{
+			nb_iteration = 0;
+
+				//Kp[0] = Kp[0] + 50;
+
+
+		}
+
+
+		/*
+		if (nb_iteration >= 300) // For stabilisation of the torque.
 		{
 
 			nb_iteration = 0;
 
 			// Changes desired position  of each joint.
 
-			/*// To make the target values of the joints change.
+			// To make the target values of the joints change.
 			if (target_value[5] < 3.14)
 			{
 				target_value[5] = target_value[5] + 1.17;
@@ -212,9 +226,9 @@ public:
 					target_value[4] = -1.4;
 				}
 				target_value[5] = -1.57;
-			}*/
+			}
 		}
-
+		 */
 		pid_it++;
 
 		// PID control of position with torque
@@ -229,13 +243,13 @@ public:
 								data_file << "jnt " << j << " ; ";
 								gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
 								gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-								data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
+								//data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
 								data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 								data_file << "trg_agl "	<<target_value[j] << " ; ";
 							}
 							for (unsigned j = 0; j < joints_idx.size(); j++)
 							{
-								data_file << "ctrl "	<< control_value[j] << " ; ";
+								data_file << "Kp "	<< Kp[j] << " ; ";
 							}
 							data_file << " }" << std::endl;
 				error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
@@ -245,6 +259,7 @@ public:
 				control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
 				last_error[j] = error_value[j];
 				pid_it = 0;
+				RTT::log(RTT::Error) << "Kp " << Kp[0] << " trg_agl0 " <<target_value[0] << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
 			}
 		}
 
@@ -259,9 +274,6 @@ public:
 	}
 
 
-	bool UR5RttGazeboComponent::startHook() {
-	    return true;
-	}
 
 	virtual bool configureHook() {
 		return true;
@@ -272,13 +284,6 @@ public:
 		return;
 	}
 
-	void UR5RttGazeboComponent::stopHook() {
-		return ;
-	}
-
-	void UR5RttGazeboComponent::cleanupHook() {
-		return ;
-	}
 protected:
 
 	//! Synchronization ??
