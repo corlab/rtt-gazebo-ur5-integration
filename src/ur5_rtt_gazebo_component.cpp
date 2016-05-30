@@ -43,9 +43,11 @@ public:
 	// Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) (best for now)
 	// ok values Kp({10000 , 10000 , 10000 , 100 , 100 , 100}) , Ki({0 , 0 , 0 , 0.0 , 0.0 , 0.0}) , Kd({200 ,200 , 200 , 0.1 , 0.1 , 0.1}
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
+	// Kp({2700 , 1500  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 0.5  , 1.0  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,0.5 , 0.5 , 209250 , 209250 , 209250})  test to improve joint1 pos. not working well
+
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(
-					0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5),Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250}) ) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+					0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -60,7 +62,7 @@ public:
 		l1 = 0.7; // find real values later !!
 		l2 = 0.9;// find real values later !!
 
-	}
+		}
 
 	//! Called from gazebo
 	virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model) {
@@ -130,7 +132,7 @@ public:
 
 
 		target_value[0] = 0 ;
-		target_value[1] = -0.8 ;
+		target_value[1] = -0.1 ;
 		target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
@@ -148,8 +150,11 @@ public:
 
 
 
-		if (nb_iteration >= 2000) // For stabilisation of the torque.
+		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
+			//Ki[2] = Ki[2] + 0.5;
+			//Kp[2] = Kp[2] + 100;
+			//For tuning PID :
 
 
 			data_file << "{ sim_id = " << sim_id << " ; ";
@@ -235,8 +240,7 @@ public:
 				target_value[5] = -1.57;
 			}
 
-			//For tuning PID :
-			// RTT::log(RTT::Error) << "Kd " << Kd[0]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
+
 
 
 		}
@@ -256,6 +260,8 @@ public:
 				last_error[j] = error_value[j];
 				pid_it = 0;
 			}
+		//RTT::log(RTT::Error) << "Ki " << Ki[2]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
+
 		}
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -263,6 +269,7 @@ public:
 			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
 			//gazebo_joints_[joints_idx[j]]->SetPosition(0 , target_value[j]);
 		}
+
 
 		sim_id ++;
 
