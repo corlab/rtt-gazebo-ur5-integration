@@ -26,7 +26,7 @@
 #include <iostream>
 #include <math.h>
 
-#include "ur5_rtt_gazebo_component_temp.hpp"
+#include "ur5_rtt_gazebo_component.hpp"
 
 using namespace std;
 
@@ -36,14 +36,13 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(0)
+			RTT::TaskContext(name), nb_static_joints(0) , trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(0.0005) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
-				&gazeboConfigureHook, this,
-				RTT::ClientThread);
+				&UR5RttGazeboComponent::gazeboConfigureHook, this,	RTT::ClientThread);
 		this->provides("gazebo")->addOperation("update",
-				&gazeboUpdateHook, this, RTT::ClientThread);
+				&UR5RttGazeboComponent::gazeboUpdateHook, this, RTT::ClientThread);
 
 		nb_iteration = 0;
 		sim_id = 1;
@@ -54,7 +53,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 	}
 
 	//! Called from gazebo
-	virtual bool UR5RttGazeboComponent::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
+	bool UR5RttGazeboComponent::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
 		if (model.get() == NULL) {
 			RTT::log(RTT::Error) << "No model could be loaded" << RTT::endlog();
 			std::cout << "No model could be loaded" << RTT::endlog();
@@ -133,14 +132,14 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 	}
 
 	//! Called from Gazebo
-	virtual void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
+	void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
 		if (model.get() == NULL) {
 			return;
 		}
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
-				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]/dynStepSize);
+				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]/PIDStepSize);
 			}
 
 			sim_id ++;
@@ -261,12 +260,12 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 	    return true;
 	}
 
-	virtual bool UR5RttGazeboComponent::configureHook() {
+	bool UR5RttGazeboComponent::configureHook() {
 		return true;
 	}
 
 
-	virtual void UR5RttGazeboComponent::updateHook() {
+	void UR5RttGazeboComponent::updateHook() {
 		return;
 	}
 

@@ -25,7 +25,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 // Parser include convert URDF/SDF into KDL::Chain
-#include "parsertools/KDLParser.hpp"
+//#include "parsertools/KDLParser.hpp"
 
 class UR5RttGazeboComponent: public RTT::TaskContext {
 public:
@@ -60,6 +60,8 @@ public:
 	gazebo::physics::Link_V model_links_;
 	std::vector<std::string> joint_names_;
 
+
+	double PIDStepSize;
 
 	int nb_static_joints;
 
