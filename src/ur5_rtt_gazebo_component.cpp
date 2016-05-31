@@ -120,13 +120,16 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		refJntPos_Port.setDataSample(trqCmdOutput);
 		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
 
+		targetPosition = { 0 , -0.3 , 3.14 - (+ -0.3 + acos(sin(0.3)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
 
+		/*
 		targetPosition[0] = 0 ;
 		targetPosition[1] = -0.3 ;
 		targetPosition[2] = 3.14 - (+ targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 0.3 -0.4;
 		targetPosition[3] = -3.14;
 		targetPosition[4] = -1.4;
 		targetPosition[5] = -1.57;
+		*/
 
 		RTT::log(RTT::Warning) << "Configure hook finished. " << RTT::endlog();
 

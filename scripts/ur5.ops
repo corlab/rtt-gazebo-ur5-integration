@@ -1,5 +1,8 @@
 // import everything we need
 import("RTTController")
+import("PIDController")
+
+	displayComponentTypes();
 
 //HighestPriority = 99
 //LowestPriority = 1
@@ -24,12 +27,9 @@ setActivity("pid_component",0.0005,HighestPriority,ORO_SCHED_RT)
 // # Connect Controller to Gazebo
 var ConnPolicy cp_ctrl_gz;
 
-connect("pid_component.cmdJntTrq","ur5_gazebo.JointTorqueCommand",cp_ctrl_gz);
-
-connect("ur5_gazebo.JointPosition","pid_component.currJntPos",cp_ctrl_gz);
-connect("ur5_gazebo.JointTorque","pid_component.currJntTrq",cp_ctrl_gz);
-connect("ur5_gazebo.JointVelocity","pid_component.currJntVel",cp_ctrl_gz);
-
+connect("pid_component.cmdJntTrq_Port","ur5_gazebo.cmdJntTrq_Port",cp_ctrl_gz);
+connect("ur5_gazebo.currJntPos_Port","pid_component.currJntPos_Port",cp_ctrl_gz);
+connect("ur5_gazebo.refJntPos_Port","pid_component.refJntPos_Port",cp_ctrl_gz);
 
 
 pid_component.configure()

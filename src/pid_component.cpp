@@ -5,9 +5,9 @@
 
 
 PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(0.0005) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000})  {
-    this->addPort("cmdJntTrq", cmdJntTrq_Port);
-    trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
 
+	this->addPort("cmdJntTrq", cmdJntTrq_Port);
+    trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
     cmdJntTrq_Port.setDataSample(trqCmdOutput);
 
     this->addPort("currJntPos", currJntPos_Port);
@@ -72,6 +72,6 @@ void PIDController::cleanupHook() {
 	return ;
 }
 
-
-ORO_CREATE_COMPONENT_LIBRARY()
+ORO_CREATE_COMPONENT(PIDController);
 ORO_LIST_COMPONENT_TYPE(PIDController);
+ORO_CREATE_COMPONENT_LIBRARY()
