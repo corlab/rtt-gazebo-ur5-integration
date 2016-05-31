@@ -1,13 +1,7 @@
 // import everything we need
 import("RTTController")
 
-//HighestPriority = 99
-//LowestPriority = 1
-
 // #######------- lwr_gazebo : LWRGazeboComponent -------#######
-// lwr_gazebo aka LWRGazeboComponent is launched via the world deployer plugin.
-// scheduler and period still needs to be set
-//setActivity("lwr_gazebo",0.001,HighestPriority,ORO_SCHED_RT)
 
 ur5_gazebo.configure()
 ur5_gazebo.start()
