@@ -45,7 +45,7 @@ public:
 
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , right_pos(true) , inter_angle(0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({1 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , inter_angle0({0 , 0 , 0 , 0 , 0}) , inter_angle1({0 , 0 , 0 , 0 , 0}) , inter_angle2({0 , 0 , 0 , 0 , 0}) , inter_angle3({0 , 0 , 0 , 0 , 0}) , inter_angle4({0 , 0 , 0 , 0 , 0}) , inter_angle5({0 , 0 , 0 , 0 , 0}) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({1 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -116,7 +116,6 @@ public:
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
 
-			inter_angle.push_back(0);
 			error_value.push_back(0);
 			cumulative_error.push_back(0);
 			last_error.push_back(0);
@@ -148,24 +147,73 @@ public:
 		nb_iteration++;
 
 
-		if (nb_iteration == 9500) // To check if position is stable.
+		if (nb_iteration == 2950) // To check if position is stable.
 		{
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				inter_angle[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-			}
+
+				inter_angle0[0] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[0] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[0] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[0] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[0] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[0] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
+		}
+		if (nb_iteration == 2960) // To check if position is stable.
+		{
+
+				inter_angle0[1] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[1] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[1] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[1] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[1] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[1] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
+		}
+		if (nb_iteration == 2970) // To check if position is stable.
+		{
+
+				inter_angle0[2] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[2] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[2] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[2] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[2] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[2] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
+		}
+		if (nb_iteration == 2980) // To check if position is stable.
+		{
+
+				inter_angle0[3] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[3] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[3] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[3] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[3] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[3] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
+		}
+		if (nb_iteration == 2990) // To check if position is stable.
+		{
+
+				inter_angle0[4] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[4] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[4] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[4] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[4] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[4] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
+		}
+		if (nb_iteration == 2990) // To check if position is stable.
+		{
+
+				inter_angle0[5] = model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian();
+				inter_angle1[5] = model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian();
+				inter_angle2[5] = model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian();
+				inter_angle3[5] = model->GetJoints()[joints_idx[3]]->GetAngle(0).Radian();
+				inter_angle4[5] = model->GetJoints()[joints_idx[4]]->GetAngle(0).Radian();
+				inter_angle5[5] = model->GetJoints()[joints_idx[5]]->GetAngle(0).Radian();
 		}
 
-		if (nb_iteration >= 7000) // For stabilisation of the torque.
+
+		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 
-			//Kd[1] = Kd[1] + 0.2;
-			//Ki[j] = Ki[j] + 0.5;
-			//For tuning PID :
-
-
 			// Data written only if robot position is not too far from the desired position.
-			for (unsigned j = 0; j < joints_idx.size(); j++)
+	/*		for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
 				if ((inter_angle[j] > target_value[j] + 0.1) || (inter_angle[j] < target_value[j] - 0.1))
 					right_pos = false;
@@ -174,7 +222,7 @@ public:
 			}
 
 			if (right_pos)
-			{
+			{*/
 				data_file << "{ sim_id = " << sim_id << " ; ";
 
 				for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -183,13 +231,18 @@ public:
 					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
 					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
 					data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
+				}
+
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
+					*std::min_element(inter_angle0,inter_angle0+5);
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
 					data_file << "trg_agl "	<<target_value[j] << " ; ";
 				}
 				data_file << " }" << std::endl;
-			}
+			//}
 			nb_iteration = 0;
-			right_pos = true;
+		//	right_pos = true;
 
 
 			// Changes desired position  of each joint.
@@ -221,7 +274,7 @@ public:
 							target_value[2] = target_value[2] + 0.3;
 						}
 						else
-						{
+						{*/
 							if (target_value[1] > -2.3)
 							{
 								target_value[1] = target_value[1] - 0.4;
@@ -249,7 +302,7 @@ public:
 							{
 								target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
 							}
-						}
+						/*}
 						target_value[3] = -3.14;
 					}
 					target_value[4] = -1.4;
@@ -327,8 +380,13 @@ protected:
 
 
 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
-	std::vector<double> inter_angle;
-	bool right_pos;
+	std::vector<double> inter_angle0;
+	std::vector<double> inter_angle1;
+	std::vector<double> inter_angle2;
+	std::vector<double> inter_angle3;
+	std::vector<double> inter_angle4;
+	std::vector<double> inter_angle5;
+	//bool right_pos;
 
 	// Variables for PID controller : transform to vector for several joints.
 	std::vector<double> error_value;
