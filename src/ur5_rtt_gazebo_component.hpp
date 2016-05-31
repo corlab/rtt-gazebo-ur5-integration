@@ -29,14 +29,16 @@
 
 class UR5RttGazeboComponent: public RTT::TaskContext {
 public:
+
+	virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model);
+	virtual void gazeboUpdateHook(gazebo::physics::ModelPtr model);
 	UR5RttGazeboComponent(std::string const& name);
     bool configureHook();
     bool startHook();
     void updateHook();
     void stopHook();
     void cleanupHook();
-    virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model);
-    virtual void gazeboUpdateHook(gazebo::physics::ModelPtr model);
+
 
     RTT::InputPort<std::vector<double>> cmdJntTrq_Port;
     RTT::FlowStatus cmdJntTrq_Flow;

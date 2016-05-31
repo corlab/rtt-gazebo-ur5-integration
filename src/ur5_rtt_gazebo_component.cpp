@@ -39,20 +39,18 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(0) , trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(0.0005) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
-		this->provides("gazebo")->addOperation("configure",
-				&UR5RttGazeboComponent::gazeboConfigureHook, this,	RTT::ClientThread);
-		this->provides("gazebo")->addOperation("update",
-				&UR5RttGazeboComponent::gazeboUpdateHook, this, RTT::ClientThread);
+		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
+		this->provides("gazebo")->addOperation("update", &UR5RttGazeboComponent::gazeboUpdateHook, this, RTT::ClientThread);
 
 		nb_iteration = 0;
 		sim_id = 1;
 
-		l1 = 0.7; // find real values later !!
+		l1 = 0.7;// find real values later !!
 		l2 = 0.9;// find real values later !!
 
 	}
 
-	//! Called from gazebo
+	//! Called from gazebo.
 	bool UR5RttGazeboComponent::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
 		if (model.get() == NULL) {
 			RTT::log(RTT::Error) << "No model could be loaded" << RTT::endlog();
@@ -120,6 +118,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		currJntPos_Port.setDataSample(trqCmdOutput);
 		this->addPort("refJntPos", refJntPos_Port);
 		refJntPos_Port.setDataSample(trqCmdOutput);
+		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
+
 
 		targetPosition[0] = 0 ;
 		targetPosition[1] = -0.3 ;
@@ -127,6 +127,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		targetPosition[3] = -3.14;
 		targetPosition[4] = -1.4;
 		targetPosition[5] = -1.57;
+
+		RTT::log(RTT::Warning) << "Configure hook finished. " << RTT::endlog();
 
 		return true;
 	}
