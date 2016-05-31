@@ -150,7 +150,7 @@ public:
 
 
 
-		if (nb_iteration >= 3000) // For stabilisation of the torque.
+		if (nb_iteration >= 10000) // For stabilisation of the torque.
 		{
 			//Ki[2] = Ki[2] + 0.5;
 			//Kp[2] = Kp[2] + 100;
