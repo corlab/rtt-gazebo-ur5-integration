@@ -38,16 +38,14 @@ class UR5RttGazeboComponent: public RTT::TaskContext {
 public:
 
 
-	// Kp({100 , 800 , 100 , 100 , 100 , 100}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 10000 , 10 , 10 , 10 , 10})
-	// Kp({100 , 1500 , 10000 , 100 , 100 , 100}) , Ki({0.01 , 500 , 70 , 0 , 0 , 0}) , Kd({10, 200 , 100 , 0 , 0 , 0})
-	// Kp({100 , 800 , 100 , 400 , 400 , 400}) , Ki({0.01 , 10 , 0.01 , 0.01 , 0.01 , 0.01}) , Kd({10 , 100000 , 5000 , 3000 , 1000 , 1000}) (best for now)
+
 	// ok values Kp({10000 , 10000 , 10000 , 100 , 100 , 100}) , Ki({0 , 0 , 0 , 0.0 , 0.0 , 0.0}) , Kd({200 ,200 , 200 , 0.1 , 0.1 , 0.1}
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 	// Kp({2700 , 1500  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 0.5  , 1.0  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,0.5 , 0.5 , 209250 , 209250 , 209250})  test to improve joint1 pos. not working well
 
+
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(
-					0) , right_pos(true) , inter_angle(0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , right_pos(true) , inter_angle(0) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({1 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -158,10 +156,11 @@ public:
 			}
 		}
 
-		if (nb_iteration >= 10000) // For stabilisation of the torque.
+		if (nb_iteration >= 7000) // For stabilisation of the torque.
 		{
-			//Ki[2] = Ki[2] + 0.5;
-			//Kp[2] = Kp[2] + 100;
+
+			//Kd[1] = Kd[1] + 0.2;
+			//Ki[j] = Ki[j] + 0.5;
 			//For tuning PID :
 
 
@@ -194,6 +193,7 @@ public:
 
 
 			// Changes desired position  of each joint.
+			/*
 			if (target_value[5] < 3.14)
 			{
 				target_value[5] = target_value[5] + 1.17;
@@ -256,7 +256,7 @@ public:
 				}
 				target_value[5] = -1.57;
 			}
-
+*/
 
 
 
@@ -277,7 +277,7 @@ public:
 				last_error[j] = error_value[j];
 				pid_it = 0;
 			}
-		//RTT::log(RTT::Error) << "Ki " << Ki[2]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
+		RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
 
 		}
 
