@@ -42,10 +42,7 @@ public:
 
 
 
-	// ok values Kp({10000 , 10000 , 10000 , 100 , 100 , 100}) , Ki({0 , 0 , 0 , 0.0 , 0.0 , 0.0}) , Kd({200 ,200 , 200 , 0.1 , 0.1 , 0.1}
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
-	// Kp({2700 , 1500  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 0.5  , 1.0  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,0.5 , 0.5 , 209250 , 209250 , 209250})  test to improve joint1 pos. not working well
-
 
 	UR5RttGazeboComponent(std::string const& name) :
 			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 2700 }) , Ki({2 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
@@ -164,16 +161,6 @@ public:
 		{
 
 
-			// Data written only if robot position is not too far from the desired position.
-	/*		for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				if ((inter_angle[j] > target_value[j] + 0.1) || (inter_angle[j] < target_value[j] - 0.1))
-					right_pos = false;
-				if ((model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() > target_value[j] + 0.1) || (model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() < target_value[j] - 0.1))
-					right_pos = false;
-			}
-*/
-
 				data_file << "{ sim_id = " << sim_id << " ; ";
 
 				for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -281,7 +268,6 @@ public:
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
-			//gazebo_joints_[joints_idx[j]]->SetPosition(0 , target_value[j]);
 		}
 
 
