@@ -164,6 +164,29 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
+			// Data recording.
+
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				data_file << "{ sim_id = " << sim_id << " ; ";
+
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					data_file << "jnt " << j << " ; ";
+					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+					data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
+					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
+					data_file << "trg_agl "	<<targetPosition[j] << " ; ";
+				}
+				/*
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
+				}*/
+				data_file << " }" << std::endl;
+			}
+
 
 			nb_iteration = 0;
 
@@ -234,33 +257,12 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			}
 
 
+
 		}
 
 
 
-		// PID control of position with torque
-		if (sim_id % 100 == 0)
-		{
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				data_file << "{ sim_id = " << sim_id << " ; ";
 
-							for (unsigned j = 0; j < joints_idx.size(); j++)
-							{
-								data_file << "jnt " << j << " ; ";
-								gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-								gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-								data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
-								data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
-								data_file << "trg_agl "	<<targetPosition[j] << " ; ";
-							}
-							for (unsigned j = 0; j < joints_idx.size(); j++)
-							{
-								data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
-							}
-							data_file << " }" << std::endl;
-			}
-		}
 
 		if (currJntPos_Port.connected()) {
 			currJntPos_Port.write(currPosition);
