@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(0.0005) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(0.0005) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
@@ -151,17 +151,28 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		nb_iteration++;
 
-		if (nb_iteration >= 80000) // For stabilisation of the torque.
+
+		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
+		{
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+				gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+				inter_torque[j].push_back(a1.Dot(w1.body1Torque));
+			}
+		}
+
+		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 
 			nb_iteration = 0;
 
 			// Changes desired position  of each joint.
 
-			/*// To make the target values of the joints change.
+			// To make the target values of the joints change.
 			if (targetPosition[5] < 3.14)
 			{
-				targetPosition[5] = target_value[5] + 1.17;
+				targetPosition[5] = targetPosition[5] + 1.17;
 			}
 			else
 			{
@@ -220,7 +231,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 					targetPosition[4] = -1.4;
 				}
 				targetPosition[5] = -1.57;
-			}*/
+			}
 
 
 		}
@@ -239,7 +250,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 								data_file << "jnt " << j << " ; ";
 								gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
 								gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-								data_file << "trq "<< a1.Dot(w1.body1Torque) << " ; "; // See torque computation !!
+								data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
 								data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 								data_file << "trg_agl "	<<targetPosition[j] << " ; ";
 							}
@@ -253,10 +264,10 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		if (currJntPos_Port.connected()) {
 			currJntPos_Port.write(currPosition);
-		    }
+		}
 		if (refJntPos_Port.connected()) {
 			refJntPos_Port.write(targetPosition);
-				    }
+		}
 
 	}
 

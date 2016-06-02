@@ -62,6 +62,9 @@ public:
 	gazebo::physics::Link_V model_links_;
 	std::vector<std::string> joint_names_;
 
+	// Variable to save intermediate robot position - to decide if the data will be written in the file.
+	std::vector< std::vector<double> > inter_torque;
+
 
 	double PIDStepSize;
 
