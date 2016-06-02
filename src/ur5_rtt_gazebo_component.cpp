@@ -157,6 +157,7 @@ public:
 			}
 		}
 
+
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 
@@ -242,10 +243,42 @@ public:
 			}
 
 
-
-
 		}
 
+		/*// For videos
+		if (sim_id < 5000)
+		{
+			target_value[0] = -1;
+			target_value[1] = -0.7;
+			target_value[2] = 1.3;
+			target_value[3] = -2;
+			target_value[4] = -1.4;
+			target_value[5] = -1.57;
+		}
+		else if ((sim_id  > 5000) && (sim_id < 6500))
+		{
+
+			target_value[2] = target_value[2] - 0.0006;
+
+		}
+		else if ((sim_id  > 6500) && (sim_id < 10200))
+		{
+			target_value[0] = target_value[0] - 0.0006;
+
+		}
+		else if ((sim_id  > 10200) && (sim_id < 11700))
+		{
+			target_value[2] = target_value[2] + 0.0006;
+		}
+
+
+		target_value[0] = -1;
+		target_value[1] = -1.57;
+		target_value[2] = 1.57;
+		target_value[3] = -1.57;
+		target_value[4] = -1.57;
+		target_value[5] = -1.57;
+*/
 		pid_it++;
 
 		// PID control of position with torque
@@ -261,7 +294,8 @@ public:
 				last_error[j] = error_value[j];
 				pid_it = 0;
 			}
-		RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
+		// For tuning PID.
+			//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
 
 		}
 
