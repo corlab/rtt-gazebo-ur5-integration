@@ -133,7 +133,7 @@ public:
 
 		target_value[0] = 0 ;
 		target_value[1] = -0.1 ;
-		target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+		target_value[2] =  3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
 		target_value[5] = -1.57;
