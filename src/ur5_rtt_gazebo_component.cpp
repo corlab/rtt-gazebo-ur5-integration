@@ -110,6 +110,12 @@ public:
 			return false;
 		}
 
+
+		// TODO Read links. Test link parameters modification virtual
+		//void gazebo::physics::Link::SetInertial 	( 	const InertialPtr &  	_inertial	)
+		//void gazebo::physics::Link::UpdateMass 	( 		)
+
+
 		RTT::log(RTT::Warning) << "Gazebo model found " << joints_idx.size()
 				<< " joints " << RTT::endlog();
 		RTT::log(RTT::Warning) << "Done configuring gazebo" << RTT::endlog();
@@ -314,6 +320,37 @@ public:
 
 
 		sim_id ++;
+
+
+
+
+		/*//To be added in the URDF to modify end effector mass
+		 *
+		 * <link name="ee_link">
+    <collision>
+      <origin xyz="0.025 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0.025 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 1" rpy="0 0 0"/>
+      <mass value="1"/>
+      <inertia
+        ixx="0.0004" ixy="0.0" ixz="0.0"
+        iyy="0.0004" iyz="0.0"
+        izz="0.0004"/>
+    </inertial>
+  </link>
+		 */
 
 	}
 
