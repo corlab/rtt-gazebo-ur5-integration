@@ -28,6 +28,8 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
+#include <numeric>
+
 
 //#include "ur5_rtt_gazebo_component.hpp"
 
@@ -163,14 +165,20 @@ public:
 
 
 				data_file << "{ sim_id = " << sim_id << " ; ";
-
+				double mean_of_torques = 0;
 				for (unsigned j = 0; j < joints_idx.size(); j++)
 				{
 					data_file << "jnt " << j << " ; ";
 
-					data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
+					// Computing the mean of the torques.
+
+					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/5.0;
+
+					data_file << "trq "<< mean_of_torques << " ; ";
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 					data_file << "trg_agl "	<<target_value[j] << " ; ";
+					mean_of_torques = 0;
+					inter_torque[j] = {0};
 				}
 				data_file << " }" << std::endl;
 
@@ -197,19 +205,19 @@ public:
 					}
 					else
 					{
-						if (target_value[1] < 1.57 && target_value[2] > (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8))
+						if (target_value[1] < 1.57 && (target_value[2]-0.4) > (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8))
 						{
-							target_value[2] = target_value[2] - 0.3;
+							target_value[2] = target_value[2] - 0.4;
 						}
-						else if (target_value[1] > 1.57 && target_value[2] > (-3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2))+3.14 - 0.8))
+						else if (target_value[1] > 1.57 && (target_value[2]+0.4) < (-3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2))+3.14 - 0.8))
 						{
-							target_value[2] = target_value[2] + 0.3;
+							target_value[2] = target_value[2] + 0.4;
 						}
 						else
 						{
-							if ((target_value[1] -0.4) > -2.3)
+							if ((target_value[1] -0.5) > -2.3)
 							{
-								target_value[1] = target_value[1] - 0.4;
+								target_value[1] = target_value[1] - 0.5;
 							}
 							else
 							{
