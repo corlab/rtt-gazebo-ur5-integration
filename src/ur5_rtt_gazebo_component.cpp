@@ -47,7 +47,7 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 2700 }) , Ki({2 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -78,7 +78,7 @@ public:
 		model_links_ = model->GetLinks(); // Only working when starting gzserver and gzclient separately!
 
 		RTT::log(RTT::Warning) << "Model has " << gazebo_joints_.size()
-				<< " joints" << RTT::endlog();
+				<< " joints and " << model_links_.size()<< " links"<< RTT::endlog();
 
 		//NOTE: Get the joint names and store their indices
 		// Because we have base_joint (fixed), j0...j6, ati_joint (fixed)
@@ -115,9 +115,29 @@ public:
 		//void gazebo::physics::Link::SetInertial 	( 	const InertialPtr &  	_inertial	)
 		//void gazebo::physics::Link::UpdateMass 	( 		)
 
+		idx = 0;
+		for (gazebo::physics::Link_V::iterator lit = model_links_.begin();
+				lit != model_links_.end(); ++lit, ++idx) {
 
-		RTT::log(RTT::Warning) << "Gazebo model found " << joints_idx.size()
-				<< " joints " << RTT::endlog();
+			const std::string name = (*lit)->GetName();
+			links_idx.push_back(idx);
+			link_names_.push_back(name);
+			RTT::log(RTT::Warning) << "Adding link [" << name << "] idx:"
+					<< idx << RTT::endlog();
+			nb_links++;
+		}
+
+
+
+		if (links_idx.size() == 0) {
+			RTT::log(RTT::Error) << "No links could be added, exiting"
+					<< RTT::endlog();
+			return false;
+		}
+
+
+
+
 		RTT::log(RTT::Warning) << "Done configuring gazebo" << RTT::endlog();
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -233,6 +253,21 @@ public:
 								if ((target_value[0]+1.5) >= 6.28)
 								{
 									target_value[0] = 0;
+									 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
+
+															RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
+															auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
+															RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
+															inertial->SetMass(1.0);
+															RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
+															inertial->SetInertiaMatrix(0.000416667, 0.000416667, 0.000416667, 0, 0, 0);
+															RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
+															model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
+															RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
+															model_links_[links_idx[nb_links-1]]->UpdateMass();
+															RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
+
+
 								}
 								else
 								{
@@ -255,6 +290,8 @@ public:
 				}
 				target_value[5] = -1.57;
 			}
+
+
 
 
 		}
@@ -309,7 +346,7 @@ public:
 				pid_it = 0;
 			}
 		// For tuning PID.
-			//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
+		//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
 
 		}
 
@@ -317,6 +354,7 @@ public:
 		{
 			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
 		}
+
 
 
 		sim_id ++;
@@ -376,11 +414,14 @@ protected:
 	int sim_id; // number of angle positions tested.
 
 	std::vector<int> joints_idx;
+	std::vector<int> links_idx;
+
 
 	std::vector<gazebo::physics::JointPtr> gazebo_joints_;
 	gazebo::physics::Link_V model_links_;
 	std::vector<std::string> joint_names_;
-
+	std::vector<std::string> link_names_;
+	int nb_links;
 
 	int nb_static_joints;
 
