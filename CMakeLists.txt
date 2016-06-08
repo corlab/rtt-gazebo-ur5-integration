@@ -67,7 +67,22 @@ if(${OROCOS_TARGET} STREQUAL "xenomai" )
 endif()
 
 ## Default component
-orocos_component(ur5_rtt_gazebo src/ur5_rtt_gazebo_component.cpp)
+orocos_component(ur5_rtt_gazebo src/ur5_rtt_gazebo_component.cpp
+                                src/AdaptiveLinearMapping.cpp
+                                src/AdaptiveLinearMapping.h
+                                src/AdaptiveMapping.cpp
+                                src/AdaptiveMapping.h
+                                src/ExtremeLearningMachine.cpp
+                                src/ExtremeLearningMachine.h
+                                src/Mapping.cpp
+                                src/Mapping.h
+                                src/RealMatrix.h
+                                src/RealMatrix.cpp
+                                src/RealVector.cpp
+                                src/RealVector.h
+                                src/TimeSeries.cpp
+                                src/TimeSeries.h
+                                src/VectorMath.h)
 set_target_properties(ur5_rtt_gazebo PROPERTIES COMPILE_DEFINITIONS RTT_COMPONENT)
 target_link_libraries(ur5_rtt_gazebo 
   ${orocos_kdl_LIBRARIES} 

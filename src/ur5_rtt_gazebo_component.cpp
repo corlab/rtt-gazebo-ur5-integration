@@ -30,8 +30,8 @@
 #include <math.h>
 #include <numeric>
 
-
-//#include "ur5_rtt_gazebo_component.hpp"
+#include "RealVector.h"
+#include "ExtremeLearningMachine.h"
 
 using namespace std;
 
@@ -47,7 +47,7 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -71,6 +71,16 @@ public:
 			std::cout << "No model could be loaded" << RTT::endlog();
 			return false;
 		}
+
+
+		// ELM model creation.
+		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/elmmodel/data");
+		elm=ExtremeLearningMachine::create(infile);
+		RTT::log(RTT::Warning)  << "Generating testdata with dimensionality: " << elm->getInputDimension() << RTT::endlog();
+		RTT::log(RTT::Warning) << "Expecting results with dimensionality: " << elm->getOutputDimension() << RTT::endlog();
+		RTT::log(RTT::Error) << "ELM loaded" << RTT::endlog();
+
+
 
 
 		// Get the joints
@@ -149,8 +159,10 @@ public:
 			last_error.push_back(0);
 			control_value.push_back(0);
 			target_value.push_back(0);
+			torque_difference.push_back(0);
 
 		}
+		RTT::log(RTT::Warning) << "Done configuring PIDs" << RTT::endlog();
 
 		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
 		if (!data_file)
@@ -163,6 +175,8 @@ public:
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
 		target_value[5] = -1.57;
+		RTT::log(RTT::Warning) << "Done configuring robot position" << RTT::endlog();
+
 
 		return true;
 	}
@@ -173,6 +187,12 @@ public:
 			return;
 		}
 		nb_iteration++;
+
+
+		/***************************************************************************************************************************************************/
+
+		/*
+		 * Data recording part
 
 
 		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
@@ -201,6 +221,7 @@ public:
 					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/5.0;
 
 					data_file << "trq "<< mean_of_torques << " ; ";
+
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 					data_file << "trg_agl "	<<target_value[j] << " ; ";
 					mean_of_torques = 0;
@@ -210,6 +231,10 @@ public:
 
 			nb_iteration = 0;
 
+
+
+
+			}
 
 			// Changes desired position  of each joint.
 
@@ -295,8 +320,16 @@ public:
 
 
 		}
+		 */
+		/***************************************************************************************************************************************************/
 
-		/*// For videos
+
+		/***************************************************************************************************************************************************/
+
+
+		/*
+		 * Video recording part
+
 		if (sim_id < 5000)
 		{
 			target_value[0] = -1;
@@ -329,7 +362,47 @@ public:
 		target_value[3] = -1.57;
 		target_value[4] = -1.57;
 		target_value[5] = -1.57;
-*/
+		 */
+
+		/***************************************************************************************************************************************************/
+
+
+
+		/***************************************************************************************************************************************************/
+
+		/*
+		 * ELM part:
+		 * Computing the difference between current torque and awaited torque for each joint.
+		 */
+
+		// Create vector containing awaited position.
+		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
+		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,target_value[j]);
+
+		// Create vector containing the torque which should be applied.
+		RealVectorPtr result = elm->evaluate(inputdata);
+		//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
+
+		for (unsigned j = 0; j < joints_idx.size(); j++)
+		{
+			// Compute current torque.
+			gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+			gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+
+			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
+			RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
+
+		}
+
+		/***************************************************************************************************************************************************/
+
+
+
+		/***************************************************************************************************************************************************/
+		/*
+		 * PID Component part
+		 */
+
 		pid_it++;
 
 		// PID control of position with torque
@@ -355,40 +428,11 @@ public:
 			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
 		}
 
+		/***************************************************************************************************************************************************/
 
 
 		sim_id ++;
 
-
-
-
-		/*//To be added in the URDF to modify end effector mass
-		 *
-		 * <link name="ee_link">
-    <collision>
-      <origin xyz="0.025 0 0.0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-    </collision>
-
-    <visual>
-      <origin xyz="0.025 0 0.0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.05 0.05 0.05"/>
-      </geometry>
-    </visual>
-
-    <inertial>
-      <origin xyz="0 0 1" rpy="0 0 0"/>
-      <mass value="1"/>
-      <inertia
-        ixx="0.0004" ixy="0.0" ixz="0.0"
-        iyy="0.0004" iyz="0.0"
-        izz="0.0004"/>
-    </inertial>
-  </link>
-		 */
 
 	}
 
@@ -442,7 +486,14 @@ protected:
 	std::vector<double> Ki;
 	std::vector<double> control_value;
 	std::vector<double> target_value;
+
 	int pid_it;
+
+
+	// ELM Learner
+	ExtremeLearningMachinePtr elm;
+	std::vector<double> torque_difference;
+
 
 };
 
