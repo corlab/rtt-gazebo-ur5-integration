@@ -154,7 +154,7 @@ public:
 
 		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
 		if (!data_file)
-			RTT::log(RTT::Error) << "The file could not be opened." << RTT::endlog();
+			RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
 
 
 		target_value[0] = 0 ;
