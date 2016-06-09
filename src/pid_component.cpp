@@ -30,7 +30,7 @@
 #include "pid_component.hpp"
 
 
-PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(0.0005) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({10000 , 15000  , 15000 , 2700 , 2700 , 2700 }) , Ki({2 , 2 , 2 , 1 , 1 , 1 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})  {
+PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(5) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  {
 
 	this->addPort("cmdJntTrq", cmdJntTrq_Port);
     trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
@@ -43,56 +43,9 @@ PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), 
 }
 // dynStepsize at frequency of the component.
 
-/*
-bool PIDController::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
-
-
-    if (!(cmdJntTrq_Port.connected() && currJntPos_Port.connected()  && refJntPos_Port.connected() )) {
-        return false;
-    }
-    nb_joints = 6;
-
-    for (unsigned j = 0; j < nb_joints; j++)
-   {
-		error_value.push_back(0);
-		cumulative_error.push_back(0);
-		last_error.push_back(0);
-		trqCmdOutput.push_back(0);
-		targetPosition.push_back(0);
-   }
-
-    return true;
-}
-*/
-
 bool PIDController::startHook() {
     return true;
 }
-
-/*
-void PIDController::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
-	refJntPos_Flow = refJntPos_Port.read(targetPosition);
-
-    currJntPos_Flow = currJntPos_Port.read(currPosition);
-    if (currJntPos_Flow == RTT::NewData)
-    {
-    	// Command computation.
-    	for (unsigned j = 0; j < nb_joints; j++)
-    	{
-			error_value[j] = targetPosition[j] -  currPosition[j];
-			trqCmdOutput[j] = error_value[j]*Kp[j];
-			cumulative_error[j] = cumulative_error[j] + error_value[j];
-			trqCmdOutput[j] = trqCmdOutput[j] + cumulative_error[j]*Ki[j]*dynStepSize;
-			trqCmdOutput[j] = trqCmdOutput[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
-			last_error[j] = error_value[j];
-    	}
-    }
-
-    if (cmdJntTrq_Port.connected()) {
-        cmdJntTrq_Port.write(trqCmdOutput);
-    }
-}
-*/
 
 void PIDController::stopHook() {
 	return ;
@@ -117,6 +70,8 @@ bool PIDController::configureHook() {
 		last_error.push_back(0);
 		trqCmdOutput.push_back(0);
 		targetPosition.push_back(0);
+		currPosition.push_back(0);
+
    }
 
 	RTT::log(RTT::Error) << "PIDController configured." << RTT::endlog();
@@ -126,31 +81,53 @@ bool PIDController::configureHook() {
 
 void PIDController::updateHook() {
 
-	//RTT::log(RTT::Error) << "Beginning PIDController update." << RTT::endlog();
+		RTT::log(RTT::Error) << "Beginning PIDController update." << RTT::endlog();
 
-	/*
-	refJntPos_Flow = refJntPos_Port.read(targetPosition);
+		refJntPos_Flow = refJntPos_Port.read(targetPosition);
+	//	RTT::log(RTT::Error) << "P: Target position read." << RTT::endlog();
 
 	    currJntPos_Flow = currJntPos_Port.read(currPosition);
-	    if (currJntPos_Flow == RTT::NewData)
+		//RTT::log(RTT::Error) << "P: Current position read." << RTT::endlog();
+
+	    if (currJntPos_Flow == RTT::NewData || refJntPos_Flow == RTT::NewData)
 	    {
+	    	RTT::log(RTT::Error) << "P: New position received." << RTT::endlog();
+
 	    	// Command computation.
 	    	for (unsigned j = 0; j < nb_joints; j++)
 	    	{
 				error_value[j] = targetPosition[j] -  currPosition[j];
+				//RTT::log(RTT::Error) << "Joint " << j << " error computed. "<< RTT::endlog();
+
 				trqCmdOutput[j] = error_value[j]*Kp[j];
+				//RTT::log(RTT::Error) << "Joint " << j << " Kp computed. "<< RTT::endlog();
+
 				cumulative_error[j] = cumulative_error[j] + error_value[j];
+				//RTT::log(RTT::Error) << "Joint " << j << " cumulative error computed. "<< RTT::endlog();
+
 				trqCmdOutput[j] = trqCmdOutput[j] + cumulative_error[j]*Ki[j]*dynStepSize;
+
+				//RTT::log(RTT::Error) << "Joint " << j << " ki computed. "<< RTT::endlog();
+
 				trqCmdOutput[j] = trqCmdOutput[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
+
+				//RTT::log(RTT::Error) << "Joint " << j << " torque command computed. "<< RTT::endlog();
+
 				last_error[j] = error_value[j];
+				//RTT::log(RTT::Error) << "Joint " << j << " last error computed. "<< RTT::endlog();
+
 	    	}
 	    }
+		//RTT::log(RTT::Error) << "P: Torque command computed." << RTT::endlog();
+
 
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }
-	    */
-	//RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
+		//RTT::log(RTT::Error) << "P: Torque command sent." << RTT::endlog();
+
+
+	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
 
 }
 

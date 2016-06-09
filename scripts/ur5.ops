@@ -11,10 +11,7 @@ import("rtt-gazebo-ur5-integration")
 // #######------- lwr_gazebo : LWRGazeboComponent -------#######
 // lwr_gazebo aka LWRGazeboComponent is launched via the world deployer plugin.
 // scheduler and period still needs to be set
-//setActivity("lwr_gazebo",0.001,HighestPriority,ORO_SCHED_RT)
-
-
-
+//setActivity("lwr_gazebo",1,HighestPriority,ORO_SCHED_RT)
 
 
 
@@ -22,9 +19,15 @@ import("rtt-gazebo-ur5-integration")
 // #######------- lwr_osf_controller : RttLwrOSFController -------#######
 loadComponent("pid_component","PIDController");
 //lwr_osf_controller.parseURDFforKDL(lwr_gazebo.misc.urdf_string)
-setActivity("pid_component",0.0005,HighestPriority,ORO_SCHED_RT)
 
+setActivity("pid_component",0.01,99,ORO_SCHED_RT)
+setActivity("ur5_gazebo",0.01,99,ORO_SCHED_RT)
 
+  //TaskContext* a_task = new MyTask("pid_component");
+  // Set a periodic activity with priority=5, period=1000Hz
+ // a_task->setActivity( new Activity( 5, 0.001 ));
+  // ... start the component:
+  //a_task->start(); 
 
 
 // # Connect Controller to Gazebo
@@ -37,6 +40,8 @@ connect("ur5_gazebo.refJntPos","pid_component.refJntPos",cp_ctrl_gz);
 
 ur5_gazebo.configure()
 pid_component.configure()
+
+
 
 ur5_gazebo.start()
 pid_component.start()

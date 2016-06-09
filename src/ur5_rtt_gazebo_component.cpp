@@ -124,16 +124,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		refJntPos_Port.setDataSample(trqCmdOutput);
 		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
 
-		targetPosition = { 0 , -0.3 , 3.14 - (+ -0.3 + acos(sin(0.3)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
+		targetPosition = { 0 , -0.1 , 3.14 - (+ -0.1 + acos(sin(0.1)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
 
-		/*
-		targetPosition[0] = 0 ;
-		targetPosition[1] = -0.3 ;
-		targetPosition[2] = 3.14 - (+ targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 0.3 -0.4;
-		targetPosition[3] = -3.14;
-		targetPosition[4] = -1.4;
-		targetPosition[5] = -1.57;
-		*/
 
 		RTT::log(RTT::Warning) << "Configure hook finished. " << RTT::endlog();
 		RTT::log(RTT::Error) << "RttGazeboComponent configured." << RTT::endlog();
@@ -143,17 +135,22 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 	//! Called from Gazebo
 	void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
-		//RTT::log(RTT::Warning) << "Beginning GazeboComponent update. " << RTT::endlog();
-
-		/*
+		RTT::log(RTT::Warning) << "Beginning GazeboComponent update. " << RTT::endlog();
 		if (model.get() == NULL) {
 			return;
 		}
+
+
+
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
+		//	RTT::log(RTT::Warning) << "G: Torque command read." << RTT::endlog();
+
+
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
 				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]/PIDStepSize);
 			}
+		//	RTT::log(RTT::Warning) << "G: Torque command set." << RTT::endlog();
 
 			sim_id ++;
 
@@ -169,8 +166,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				inter_torque[j].push_back(a1.Dot(w1.body1Torque));
 			}
 		}
-	*/
-		/*
+
+
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 			// Data recording.
@@ -187,20 +184,21 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 					data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 					data_file << "trg_agl "	<<targetPosition[j] << " ; ";
-				}*/
-				/*
+				}
+
 				for (unsigned j = 0; j < joints_idx.size(); j++)
 				{
 					data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
-				}*//*
+				}
 				data_file << " }" << std::endl;
 			}
-	*/
-	/*
+		//	RTT::log(RTT::Warning) << "G: Data recorded." << RTT::endlog();
+
+
 			nb_iteration = 0;
 
 			// Changes desired position  of each joint.
-
+/*
 			// To make the target values of the joints change.
 			if (targetPosition[5] < 3.14)
 			{
@@ -264,7 +262,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				}
 				targetPosition[5] = -1.57;
 			}
-
+*/
 
 
 		}
@@ -276,11 +274,15 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		if (currJntPos_Port.connected()) {
 			currJntPos_Port.write(currPosition);
 		}
+		//RTT::log(RTT::Warning) << "G: Current position written." << RTT::endlog();
+
 		if (refJntPos_Port.connected()) {
 			refJntPos_Port.write(targetPosition);
 		}
-		*/
-		//RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
+		//RTT::log(RTT::Warning) << "G: Target position written." << RTT::endlog();
+
+
+				RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
 
 	}
 
