@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(0.0005) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(15) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
@@ -107,6 +107,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
+			currPosition.push_back(j);
 		}
 
 		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
@@ -143,14 +144,16 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
+
 		//	RTT::log(RTT::Warning) << "G: Torque command read." << RTT::endlog();
 
 
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
 				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]/PIDStepSize);
+				//RTT::log(RTT::Warning) << "Torque command " << j << ": "<< trqCmdOutput[j] <<  RTT::endlog();
 			}
-		//	RTT::log(RTT::Warning) << "G: Torque command set." << RTT::endlog();
+
 
 			sim_id ++;
 
@@ -268,11 +271,19 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
-
+		for (unsigned j = 0; j < joints_idx.size(); j++)
+		{
+			currPosition[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+		}
 
 
 		if (currJntPos_Port.connected()) {
 			currJntPos_Port.write(currPosition);
+			/*
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				RTT::log(RTT::Warning) << "curr pos "<< j <<": " << currPosition[j]  << RTT::endlog();
+			}*/
 		}
 		//RTT::log(RTT::Warning) << "G: Current position written." << RTT::endlog();
 

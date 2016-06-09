@@ -30,7 +30,7 @@
 #include "pid_component.hpp"
 
 
-PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(5) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  {
+PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(15) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  {
 
 	this->addPort("cmdJntTrq", cmdJntTrq_Port);
     trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
@@ -87,7 +87,12 @@ void PIDController::updateHook() {
 	//	RTT::log(RTT::Error) << "P: Target position read." << RTT::endlog();
 
 	    currJntPos_Flow = currJntPos_Port.read(currPosition);
-		//RTT::log(RTT::Error) << "P: Current position read." << RTT::endlog();
+
+	    /*
+	    for (unsigned j = 0; j < nb_joints; j++)
+	    {
+				RTT::log(RTT::Error) << "Pos "<<j<<": " << currPosition[j] << RTT::endlog();
+	    }*/
 
 	    if (currJntPos_Flow == RTT::NewData || refJntPos_Flow == RTT::NewData)
 	    {

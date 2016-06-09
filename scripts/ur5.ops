@@ -20,7 +20,7 @@ import("rtt-gazebo-ur5-integration")
 loadComponent("pid_component","PIDController");
 //lwr_osf_controller.parseURDFforKDL(lwr_gazebo.misc.urdf_string)
 
-setActivity("pid_component",0.01,99,ORO_SCHED_RT)
+setActivity("pid_component",0.015,99,ORO_SCHED_RT)
 setActivity("ur5_gazebo",0.01,99,ORO_SCHED_RT)
 
   //TaskContext* a_task = new MyTask("pid_component");
