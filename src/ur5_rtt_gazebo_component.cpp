@@ -52,6 +52,10 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 	//! Called from gazebo.
 	bool UR5RttGazeboComponent::gazeboConfigureHook(gazebo::physics::ModelPtr model) {
+
+		RTT::log(RTT::Error) << "Beginning RttGazeboComponent configuration." << RTT::endlog();
+
+
 		if (model.get() == NULL) {
 			RTT::log(RTT::Error) << "No model could be loaded" << RTT::endlog();
 			std::cout << "No model could be loaded" << RTT::endlog();
@@ -132,12 +136,16 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		*/
 
 		RTT::log(RTT::Warning) << "Configure hook finished. " << RTT::endlog();
+		RTT::log(RTT::Error) << "RttGazeboComponent configured." << RTT::endlog();
 
 		return true;
 	}
 
 	//! Called from Gazebo
 	void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
+		//RTT::log(RTT::Warning) << "Beginning GazeboComponent update. " << RTT::endlog();
+
+		/*
 		if (model.get() == NULL) {
 			return;
 		}
@@ -161,7 +169,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				inter_torque[j].push_back(a1.Dot(w1.body1Torque));
 			}
 		}
-
+	*/
+		/*
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 			// Data recording.
@@ -178,16 +187,16 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 					data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
 					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
 					data_file << "trg_agl "	<<targetPosition[j] << " ; ";
-				}
+				}*/
 				/*
 				for (unsigned j = 0; j < joints_idx.size(); j++)
 				{
 					data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
-				}*/
+				}*//*
 				data_file << " }" << std::endl;
 			}
-
-
+	*/
+	/*
 			nb_iteration = 0;
 
 			// Changes desired position  of each joint.
@@ -270,6 +279,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		if (refJntPos_Port.connected()) {
 			refJntPos_Port.write(targetPosition);
 		}
+		*/
+		//RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
 
 	}
 

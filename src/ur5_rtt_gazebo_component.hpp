@@ -40,6 +40,7 @@ public:
     void cleanupHook();
 
 
+
     RTT::InputPort<std::vector<double>> cmdJntTrq_Port;
     RTT::FlowStatus cmdJntTrq_Flow;
 

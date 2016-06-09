@@ -25,7 +25,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 // Parser include convert URDF/SDF into KDL::Chain
-#include "parsertools/KDLParser.hpp"
+//#include "parsertools/KDLParser.hpp"
 
 class PIDController: public RTT::TaskContext {
 public:
@@ -35,6 +35,8 @@ public:
     void updateHook();
     void stopHook();
     void cleanupHook();
+   // virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model);
+   // virtual void gazeboUpdateHook(gazebo::physics::ModelPtr model);
 
 
     RTT::OutputPort<std::vector<double>> cmdJntTrq_Port;

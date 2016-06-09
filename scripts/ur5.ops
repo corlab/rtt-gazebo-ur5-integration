@@ -1,6 +1,7 @@
 // import everything we need
-import("RTTController")
-import("PIDController")
+import("rtt-gazebo-ur5-integration")
+//import("RTTController")
+//import("PIDController")
 
 	displayComponentTypes();
 
@@ -12,8 +13,8 @@ import("PIDController")
 // scheduler and period still needs to be set
 //setActivity("lwr_gazebo",0.001,HighestPriority,ORO_SCHED_RT)
 
-ur5_gazebo.configure()
-ur5_gazebo.start()
+
+
 
 
 
@@ -24,15 +25,20 @@ loadComponent("pid_component","PIDController");
 setActivity("pid_component",0.0005,HighestPriority,ORO_SCHED_RT)
 
 
+
+
 // # Connect Controller to Gazebo
 var ConnPolicy cp_ctrl_gz;
 
-connect("pid_component.cmdJntTrq_Port","ur5_gazebo.cmdJntTrq_Port",cp_ctrl_gz);
-connect("ur5_gazebo.currJntPos_Port","pid_component.currJntPos_Port",cp_ctrl_gz);
-connect("ur5_gazebo.refJntPos_Port","pid_component.refJntPos_Port",cp_ctrl_gz);
+connect("pid_component.cmdJntTrq","ur5_gazebo.cmdJntTrq",cp_ctrl_gz);
+connect("ur5_gazebo.currJntPos","pid_component.currJntPos",cp_ctrl_gz);
+connect("ur5_gazebo.refJntPos","pid_component.refJntPos",cp_ctrl_gz);
 
 
+ur5_gazebo.configure()
 pid_component.configure()
+
+ur5_gazebo.start()
 pid_component.start()
 
 
