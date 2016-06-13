@@ -167,7 +167,9 @@ public:
 		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
 		if (!data_file)
 			RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
-
+		error_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/error_data.txt");
+				if (!error_file)
+					RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
 
 		target_value[0] = 0 ;
 		target_value[1] = -0.1 ;
@@ -250,7 +252,7 @@ public:
 
 
 
-
+			/*
 
 			// Changes desired position  of each joint.
 		if ((jnt_it[5]) < 5)
@@ -331,7 +333,7 @@ public:
 						jnt_it[5] = 0;
 					}
 
-
+			 */
 
 	}
 
@@ -402,6 +404,7 @@ public:
 		RealVectorPtr result = elm->evaluate(inputdata);
 		//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
 
+		error_file << "{" ;
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			// Compute current torque.
@@ -410,8 +413,9 @@ public:
 
 			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
 			RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
-
+			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
 		}
+		error_file << "}" << std::endl;
 
 		/***************************************************************************************************************************************************/
 
@@ -487,6 +491,7 @@ protected:
 
 	// File where data are written.
 	std::ofstream data_file;
+	std::ofstream error_file;
 
 	int nb_iteration; // number of hook iterations for one tested position.
 	int sim_id; // number of angle positions tested.
