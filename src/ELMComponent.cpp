@@ -13,6 +13,9 @@
 #include <rtt/Property.hpp>
 #include <rtt/Attribute.hpp>
 
+#include "RealVector.h"
+#include "ExtremeLearningMachine.h"
+
 ELMComponent::ELMComponent(std::string const& name) : RTT::TaskContext(name) , nb_joints(6) , currJntPos_Flow(RTT::NoData) , currJntTrq_Flow(RTT::NoData) {
 	// TODO Auto-generated constructor stub
 
@@ -57,7 +60,7 @@ bool ELMComponent::configureHook() {
 		thresholds[5] = 10;
 
 		// ELM model creation.
-		infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/elmmodel/data");
+		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/elmmodel/data");
 		elm=ExtremeLearningMachine::create(infile);
 		RTT::log(RTT::Warning)  << "Generating testdata with dimensionality: " << elm->getInputDimension() << RTT::endlog();
 		RTT::log(RTT::Warning) << "Expecting results with dimensionality: " << elm->getOutputDimension() << RTT::endlog();

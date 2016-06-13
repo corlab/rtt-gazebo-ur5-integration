@@ -16,6 +16,8 @@
 #include <rtt/Property.hpp>
 #include <rtt/Attribute.hpp>
 
+#include "RealVector.h"
+#include "ExtremeLearningMachine.h"
 
 class ELMComponent: public RTT::TaskContext {
 public:

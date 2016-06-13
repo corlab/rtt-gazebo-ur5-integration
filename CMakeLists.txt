@@ -69,7 +69,22 @@ endif()
 ## Default component
 orocos_component(ur5_rtt_gazebo src/ur5_rtt_gazebo_component.cpp src/ur5_rtt_gazebo_component.hpp)
 orocos_component(ur5_pid src/pid_component.cpp src/pid_component.hpp)
-orcos_component(ur5_elm src/elm_component.cpp src/elm_component.hpp)
+orocos_component(ur5_elm src/ELMComponent.cpp src/ELMComponent.hpp 
+								src/AdaptiveLinearMapping.cpp
+                                src/AdaptiveLinearMapping.h
+                                src/AdaptiveMapping.cpp
+                                src/AdaptiveMapping.h
+                                src/ExtremeLearningMachine.cpp
+                                src/ExtremeLearningMachine.h
+                                src/Mapping.cpp
+                                src/Mapping.h
+                                src/RealMatrix.h
+                                src/RealMatrix.cpp
+                                src/RealVector.cpp
+                                src/RealVector.h
+                                src/TimeSeries.cpp
+                                src/TimeSeries.h
+                                src/VectorMath.h)
 orocos_install_headers(src/ur5_rtt_gazebo_component.hpp)
 orocos_install_headers(src/pid_component.hpp)
 orocos_install_headers(src/elm_component.hpp)
