@@ -47,7 +47,7 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -121,9 +121,6 @@ public:
 		}
 
 
-		// TODO Read links. Test link parameters modification virtual
-		//void gazebo::physics::Link::SetInertial 	( 	const InertialPtr &  	_inertial	)
-		//void gazebo::physics::Link::UpdateMass 	( 		)
 
 		idx = 0;
 		for (gazebo::physics::Link_V::iterator lit = model_links_.begin();
@@ -160,6 +157,9 @@ public:
 			control_value.push_back(0);
 			target_value.push_back(0);
 			torque_difference.push_back(0);
+			jnt_it.push_back(0);
+			jnt_width.push_back(0);
+			thresholds.push_back(0);
 
 		}
 		RTT::log(RTT::Warning) << "Done configuring PIDs" << RTT::endlog();
@@ -175,7 +175,23 @@ public:
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
 		target_value[5] = -1.57;
+
+		jnt_width[0] = 6.28;
+		jnt_width[1] = abs(-2.3 - -0.1);
+		jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
+		jnt_width[3] = 0.7 - -3.14;
+		jnt_width[4] = 1.57 - -1.4;
+		jnt_width[5] = 3.14 - -1.57;
 		RTT::log(RTT::Warning) << "Done configuring robot position" << RTT::endlog();
+
+		thresholds[0] = 10;
+		thresholds[1] = 10;
+		thresholds[2] = 10;
+		thresholds[3] = 10;
+		thresholds[4] = 10;
+		thresholds[5] = 10;
+
+
 
 
 		return true;
@@ -193,7 +209,7 @@ public:
 
 		/*
 		 * Data recording part
-
+		*/
 
 		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
 		{
@@ -234,93 +250,94 @@ public:
 
 
 
-			}
+
 
 			// Changes desired position  of each joint.
-
-			if ((target_value[5]+1.17) < 3.14)
-			{
-				target_value[5] = target_value[5] + 1.17;
-			}
-			else
-			{
-				if ((target_value[4]+0.7) < 1.57)
-				{
-					target_value[4] = target_value[4] + 0.7;
-				}
-				else
-				{
-					if ( (target_value[3]+0.9) <0.7)
+		if ((jnt_it[5]) < 5)
 					{
-						target_value[3] = target_value[3] + 0.9;
+						target_value[5] = jnt_it[5]*jnt_width[5]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
+						jnt_it[5]++;
 					}
 					else
 					{
-						if (target_value[1] < 1.57 && (target_value[2]-0.4) > (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8))
+						if ((jnt_it[4]) < 5)
 						{
-							target_value[2] = target_value[2] - 0.4;
-						}
-						else if (target_value[1] > 1.57 && (target_value[2]+0.4) < (-3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2))+3.14 - 0.8))
-						{
-							target_value[2] = target_value[2] + 0.4;
+							target_value[4] = jnt_it[4]*jnt_width[4]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
+							jnt_it[4]++;
+
 						}
 						else
 						{
-							if ((target_value[1] -0.5) > -2.3)
+							if ( jnt_it[3] <5)
 							{
-								target_value[1] = target_value[1] - 0.5;
+								target_value[3] = jnt_it[3]*jnt_width[3]/5 + (jnt_width[3]/5) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
+								jnt_it[3]++;
 							}
 							else
 							{
-								target_value[1] = -0.1;
-
-
-								if ((target_value[0]+1.5) >= 6.28)
+								if ( jnt_it[2] > -5)
 								{
-									target_value[0] = 0;
-									 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
-
-															RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
-															auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
-															RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
-															inertial->SetMass(1.0);
-															RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
-															inertial->SetInertiaMatrix(0.000416667, 0.000416667, 0.000416667, 0, 0, 0);
-															RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
-															model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
-															RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
-															model_links_[links_idx[nb_links-1]]->UpdateMass();
-															RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
-
-
+									target_value[2] = jnt_it[2]*jnt_width[2]/5 - (jnt_width[2]/5) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									jnt_it[2]--;
 								}
 								else
 								{
-									target_value[0] = target_value[0] + 1.5;
+									if ((jnt_it[1] ) > -5)
+									{
+										target_value[1] = jnt_it[1]*jnt_width[1]/5 - (jnt_width[1]/5) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
+										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
+										jnt_it[1]--;
+									}
+									else
+									{
+										target_value[1] = -0.1;
+										jnt_it[1] = 0;
+										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
+
+										if (jnt_it[0] >= 5)
+										{
+											target_value[0] = 0;
+											jnt_it[0] = 0;
+											 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
+																	RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
+																	auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
+																	RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
+																	inertial->SetMass(1.0);
+																	RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
+																	inertial->SetInertiaMatrix(0.000416667, 0.000416667, 0.000416667, 0, 0, 0);
+																	RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
+																	model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
+																	RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
+																	model_links_[links_idx[nb_links-1]]->UpdateMass();
+																	RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
+										}
+										else
+										{
+											target_value[0] = jnt_it[0]*jnt_width[0]/5 + (jnt_width[0]/5) * ((((float) rand()) / (float) RAND_MAX));
+											jnt_it[0]++;
+										}
+									}
+
+									target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									jnt_it[2] = 0;
 								}
-
+								target_value[3] = -3.14;
+								jnt_it[3] = 0;
 							}
-							if (target_value[1] < 1.57)
-							{
-								target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
-							}
-							else
-							{
-								target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
-							}
+							target_value[4] = -1.4;
+							jnt_it[4] = 0;
 						}
-						target_value[3] = -3.14;
+						target_value[5] = -1.57;
+						jnt_it[5] = 0;
 					}
-					target_value[4] = -1.4;
-				}
-				target_value[5] = -1.57;
-			}
+
+
+
+	}
 
 
 
 
-		}
-		 */
 		/***************************************************************************************************************************************************/
 
 
@@ -329,7 +346,8 @@ public:
 
 		/*
 		 * Video recording part
-
+		 */
+		/*
 		if (sim_id < 5000)
 		{
 			target_value[0] = -1;
@@ -375,6 +393,7 @@ public:
 		 * Computing the difference between current torque and awaited torque for each joint.
 		 */
 
+
 		// Create vector containing awaited position.
 		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
 		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,target_value[j]);
@@ -392,6 +411,21 @@ public:
 			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
 			RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
 
+		}
+
+		/***************************************************************************************************************************************************/
+
+
+
+		/***************************************************************************************************************************************************/
+		/*
+		 * Compliancy of the robot.
+		 */
+
+		for (unsigned j = 0; j < joints_idx.size(); j++)
+		{
+			if (torque_difference[j] > thresholds[j])
+				target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
 		}
 
 		/***************************************************************************************************************************************************/
@@ -473,6 +507,10 @@ protected:
 	double l2;  // length of link2
 
 
+	// For recording data randomly.
+	std::vector<double> jnt_it;
+	std::vector<double> jnt_width; // Shouldn't forget to modify it for joint 2!!
+
 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
 	std::vector< std::vector<double> > inter_torque;
 
@@ -493,6 +531,9 @@ protected:
 	// ELM Learner
 	ExtremeLearningMachinePtr elm;
 	std::vector<double> torque_difference;
+
+	// Compliancy
+	std::vector<double> thresholds;
 
 
 };
