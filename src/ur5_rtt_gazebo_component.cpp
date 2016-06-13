@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , PIDStepSize(15) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(15) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
@@ -118,12 +118,17 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		this->addPort("cmdJntTrq", cmdJntTrq_Port);
 		trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
+		this->addPort("trgtPos", trgtPos_Port);
 
 		this->addPort("currJntPos", currJntPos_Port);
 		currJntPos_Port.setDataSample(trqCmdOutput);
 		this->addPort("refJntPos", refJntPos_Port);
 		refJntPos_Port.setDataSample(trqCmdOutput);
+		this->addPort("currJntTrq", currJntTrq_Port);
+		currJntTrq_Port.setDataSample(trqCmdOutput);
+
 		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
+
 
 		targetPosition = { 0 , -0.1 , 3.14 - (+ -0.1 + acos(sin(0.1)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
 
@@ -142,8 +147,10 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
-
+		if (cmdJntTrq_Port.connected())
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
+		if (trgtPos_Port.connected())
+			trgtPos_Flow = trgtPos_Port.read(targetPosition);
 
 		//	RTT::log(RTT::Warning) << "G: Torque command read." << RTT::endlog();
 
@@ -279,21 +286,18 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		if (currJntPos_Port.connected()) {
 			currJntPos_Port.write(currPosition);
-			/*
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				RTT::log(RTT::Warning) << "curr pos "<< j <<": " << currPosition[j]  << RTT::endlog();
-			}*/
 		}
-		//RTT::log(RTT::Warning) << "G: Current position written." << RTT::endlog();
 
 		if (refJntPos_Port.connected()) {
 			refJntPos_Port.write(targetPosition);
 		}
-		//RTT::log(RTT::Warning) << "G: Target position written." << RTT::endlog();
+
+		if (currJntTrq_Port.connected()) {
+			currJntTrq_Port.write(trqCmdOutput);
+		}
 
 
-				RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
+		RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
 
 	}
 

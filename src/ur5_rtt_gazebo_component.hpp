@@ -44,13 +44,18 @@ public:
     RTT::InputPort<std::vector<double>> cmdJntTrq_Port;
     RTT::FlowStatus cmdJntTrq_Flow;
 
-    RTT::OutputPort<std::vector<double>> currJntPos_Port;
+    RTT::InputPort<std::vector<double>> trgtPos_Port;
+    RTT::FlowStatus trgtPos_Flow;
 
+    RTT::OutputPort<std::vector<double>> currJntPos_Port;
     RTT::OutputPort<std::vector<double>> refJntPos_Port;
+    RTT::OutputPort<std::vector<double>> currJntTrq_Port;
+
 
     std::vector<double> trqCmdOutput;
     std::vector<double> currPosition;
     std::vector<double> targetPosition;
+
 
 	std::ofstream data_file;
 

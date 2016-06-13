@@ -35,9 +35,6 @@ public:
     void updateHook();
     void stopHook();
     void cleanupHook();
-   // virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model);
-   // virtual void gazeboUpdateHook(gazebo::physics::ModelPtr model);
-
 
     RTT::OutputPort<std::vector<double>> cmdJntTrq_Port;
 
@@ -53,14 +50,14 @@ public:
     std::vector<double> targetPosition;
 
     // Variables for PID controller : transform to vector for several joints.
-    	std::vector<double> error_value;
-    	std::vector<double> cumulative_error;
-    	std::vector<double> last_error;
-    	double dynStepSize;
-    	std::vector<double> Kp;
-    	std::vector<double> Kd;
-    	std::vector<double> Ki;
-    	int nb_joints;
+    std::vector<double> error_value;
+    std::vector<double> cumulative_error;
+    std::vector<double> last_error;
+    double dynStepSize;
+    std::vector<double> Kp;
+    std::vector<double> Kd;
+    std::vector<double> Ki;
+    int nb_joints;
 
 
 };
