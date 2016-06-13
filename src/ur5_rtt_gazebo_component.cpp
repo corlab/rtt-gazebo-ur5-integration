@@ -396,7 +396,7 @@ public:
 
 		// Create vector containing awaited position.
 		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
-		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,target_value[j]);
+		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
 
 		// Create vector containing the torque which should be applied.
 		RealVectorPtr result = elm->evaluate(inputdata);
