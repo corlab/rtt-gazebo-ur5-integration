@@ -47,7 +47,7 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -160,6 +160,7 @@ public:
 			jnt_it.push_back(0);
 			jnt_width.push_back(0);
 			thresholds.push_back(0);
+			jnt_effort.push_back(0);
 
 		}
 		RTT::log(RTT::Warning) << "Done configuring PIDs" << RTT::endlog();
@@ -186,12 +187,19 @@ public:
 		jnt_width[5] = 3.14 - -1.57;
 		RTT::log(RTT::Warning) << "Done configuring robot position" << RTT::endlog();
 
-		thresholds[0] = 10;
-		thresholds[1] = 10;
-		thresholds[2] = 10;
-		thresholds[3] = 10;
-		thresholds[4] = 10;
-		thresholds[5] = 10;
+		thresholds[0] = 31;
+		thresholds[1] = 12; //12;
+		thresholds[2] = 159; //30; // see if smaller could be ok. (if the position difference is not high).
+		thresholds[3] = 30;//29;
+		thresholds[4] = 29;//29;
+		thresholds[5] = 40;// 40;
+
+		jnt_effort[0] = 150;
+		jnt_effort[0] = 150;
+		jnt_effort[0] = 150;
+		jnt_effort[0] = 28;
+		jnt_effort[0] = 28;
+		jnt_effort[0] = 28;
 
 
 
@@ -404,7 +412,8 @@ public:
 		RealVectorPtr result = elm->evaluate(inputdata);
 		//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
 
-		error_file << "{" ;
+		//error_file << "{" ;
+
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			// Compute current torque.
@@ -412,11 +421,12 @@ public:
 			gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
 
 			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
-			RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
-			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+			//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
+			//error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
 		}
-		error_file << "}" << std::endl;
-	*/
+		//error_file << "}" << std::endl;
+		*/
+
 		/***************************************************************************************************************************************************/
 
 
@@ -425,13 +435,28 @@ public:
 		/*
 		 * Compliancy of the robot.
 		 */
-/*
-		for (unsigned j = 0; j < joints_idx.size(); j++)
+
+		/*
+		if (sim_id > 3000)
 		{
-			if (torque_difference[j] > thresholds[j])
-				target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				if (abs(torque_difference[j]) > thresholds[j])
+				{
+					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+					error_file << "{" ;
+					error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+					error_file << "tgtPos" << target_value[j];
+					target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+					error_file << "newPos" << target_value[j];
+					error_file << "}" << std::endl;
+
+					RTT::log(RTT::Warning) << "Joint " << j << "set to " << target_value[j] << RTT::endlog();
+				}
+			}
 		}
-*/
+		*/
 		/***************************************************************************************************************************************************/
 
 
@@ -539,6 +564,7 @@ protected:
 
 	// Compliancy
 	std::vector<double> thresholds;
+	std::vector<double> jnt_effort;
 
 
 };
