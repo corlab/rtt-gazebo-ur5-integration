@@ -129,7 +129,7 @@ void PIDController::updateHook() {
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }
-		//RTT::log(RTT::Error) << "P: Torque command sent." << RTT::endlog();
+		RTT::log(RTT::Error) << "P: Trqcmnd: " << trqCmdOutput[3] << RTT::endlog();
 
 
 	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
