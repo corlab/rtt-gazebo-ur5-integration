@@ -21,9 +21,9 @@ loadComponent("pid_component","PIDController");
 // #######------- lwr_elm_controller : RttELMController -------#######
 loadComponent("elm_component","ELMComponent");
 
-setActivity("pid_component",0.015,99,ORO_SCHED_RT)
-setActivity("elm_component" , 0.01 , 99 , ORO_SCHED_RT)
-setActivity("ur5_gazebo",0.01,99,ORO_SCHED_RT)
+setActivity("pid_component",0.0010,99,ORO_SCHED_RT)
+setActivity("elm_component" , 0.0018 , 99 , ORO_SCHED_RT)
+//setActivity("ur5_gazebo",1,1,ORO_SCHED_RT)
 
   //TaskContext* a_task = new MyTask("pid_component");
   // Set a periodic activity with priority=5, period=1000Hz
@@ -40,7 +40,7 @@ connect("ur5_gazebo.currJntPos","pid_component.currJntPos",cp_ctrl_gz);
 connect("ur5_gazebo.refJntPos","pid_component.refJntPos",cp_ctrl_gz);
 
 
-var ConnPolicy2 cp_ctrl_ELM;
+var ConnPolicy cp_ctrl_ELM;
 connect("elm_component.cmdJntPos","ur5_gazebo.cmdJntTrq",cp_ctrl_ELM);
 connect("ur5_gazebo.currJntTrq","elm_component.currJntTrq",cp_ctrl_ELM);
 connect("ur5_gazebo.currJntPos","elm_component.currJntPos",cp_ctrl_ELM);

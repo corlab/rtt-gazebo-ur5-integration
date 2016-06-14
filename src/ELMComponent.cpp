@@ -13,6 +13,9 @@
 #include <rtt/Property.hpp>
 #include <rtt/Attribute.hpp>
 
+#include <fstream>
+#include <iostream>
+
 #include "RealVector.h"
 #include "ExtremeLearningMachine.h"
 
@@ -46,6 +49,8 @@ void ELMComponent::cleanupHook() {
 }
 
 bool ELMComponent::configureHook() {
+	RTT::log(RTT::Error) << "Beginning ELMComponent configuration." << RTT::endlog();
+
 	for (unsigned j = 0; j < nb_joints; j++)
 		{
 			thresholds.push_back(0);
@@ -66,12 +71,21 @@ bool ELMComponent::configureHook() {
 		RTT::log(RTT::Warning) << "Expecting results with dimensionality: " << elm->getOutputDimension() << RTT::endlog();
 		RTT::log(RTT::Error) << "ELM loaded" << RTT::endlog();
 
+
+		error_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/error_data.txt");
+		if (!error_file)
+			RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
+		RTT::log(RTT::Error) << "The error file is open." << RTT::endlog();
+
+
+		RTT::log(RTT::Error) << "ELM Component configured." << RTT::endlog();
+
 		return true;
 
 }
 
 void ELMComponent::updateHook(){
-	RTT::log(RTT::Error) << "Beginning ELMComponent update." << RTT::endlog();
+//	RTT::log(RTT::Error) << "Beginning ELMComponent update." << RTT::endlog();
 
 	currJntPos_Flow = currJntPos_Port.read(currPos);
 	currJntTrq_Flow = currJntTrq_Port.read(currTrq);
@@ -91,12 +105,13 @@ void ELMComponent::updateHook(){
 
 	// Create vector containing the torque which should be applied.
 	RealVectorPtr result = elm->evaluate(inputdata);
-
+	error_file << "{" ;
 	for (unsigned j = 0; j < nb_joints; j++)
 	{
 		torque_difference[j] = result->getValue(j) - currTrq[j];
+		error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << currTrq[j] << " ;";
 	}
-
+	error_file << "}" << std::endl;
 	/***************************************************************************************************************************************************/
 
 
@@ -106,12 +121,13 @@ void ELMComponent::updateHook(){
 	 * Compliancy of the robot.
 	 */
 
+	/*
 	for (unsigned j = 0; j < nb_joints; j++)
 	{
 		if (torque_difference[j] > thresholds[j])
 			dsrPos[j] = currPos[j];
 	}
-
+	*/
 	/***************************************************************************************************************************************************/
 
 
@@ -123,7 +139,7 @@ void ELMComponent::updateHook(){
 	//RTT::log(RTT::Error) << "P: Torque command sent." << RTT::endlog();
 
 
-RTT::log(RTT::Error) << "ELMComponent updated." << RTT::endlog();
+//    RTT::log(RTT::Error) << "ELMComponent updated." << RTT::endlog();
 }
 
 ORO_LIST_COMPONENT_TYPE(ELMComponent);

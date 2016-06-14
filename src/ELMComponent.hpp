@@ -8,7 +8,8 @@
 #ifndef SRC_ELMCOMPONENT_HPP_
 #define SRC_ELMCOMPONENT_HPP_
 
-
+#include <fstream>
+#include <iostream>
 #include <rtt/Component.hpp>
 #include <rtt/Port.hpp>
 #include <rtt/TaskContext.hpp>
@@ -43,6 +44,7 @@ public:
 	 ExtremeLearningMachinePtr elm;
 	 std::vector<double> torque_difference;
 	 std::string infile;
+	 std::ofstream error_file;
 
 	 // Compliancy
 	 std::vector<double> thresholds;
