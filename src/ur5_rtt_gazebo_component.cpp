@@ -252,17 +252,17 @@ public:
 
 
 
-			/*
+
 
 			// Changes desired position  of each joint.
-		if ((jnt_it[5]) < 5)
+		if ((jnt_it[5]) < 4)
 					{
 						target_value[5] = jnt_it[5]*jnt_width[5]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
 						jnt_it[5]++;
 					}
 					else
 					{
-						if ((jnt_it[4]) < 5)
+						if ((jnt_it[4]) < 4)
 						{
 							target_value[4] = jnt_it[4]*jnt_width[4]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
 							jnt_it[4]++;
@@ -270,21 +270,21 @@ public:
 						}
 						else
 						{
-							if ( jnt_it[3] <5)
+							if ( jnt_it[3] <4)
 							{
 								target_value[3] = jnt_it[3]*jnt_width[3]/5 + (jnt_width[3]/5) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
 								jnt_it[3]++;
 							}
 							else
 							{
-								if ( jnt_it[2] > -5)
+								if ( jnt_it[2] > -4)
 								{
 									target_value[2] = jnt_it[2]*jnt_width[2]/5 - (jnt_width[2]/5) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
 									jnt_it[2]--;
 								}
 								else
 								{
-									if ((jnt_it[1] ) > -5)
+									if ((jnt_it[1] ) > -4)
 									{
 										target_value[1] = jnt_it[1]*jnt_width[1]/5 - (jnt_width[1]/5) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
 										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
@@ -296,7 +296,7 @@ public:
 										jnt_it[1] = 0;
 										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
 
-										if (jnt_it[0] >= 5)
+										if (jnt_it[0] >= 4)
 										{
 											target_value[0] = 0;
 											jnt_it[0] = 0;
@@ -333,7 +333,7 @@ public:
 						jnt_it[5] = 0;
 					}
 
-			 */
+
 
 	}
 
@@ -395,7 +395,7 @@ public:
 		 * Computing the difference between current torque and awaited torque for each joint.
 		 */
 
-
+		/*
 		// Create vector containing awaited position.
 		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
 		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
@@ -416,7 +416,7 @@ public:
 			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
 		}
 		error_file << "}" << std::endl;
-
+	*/
 		/***************************************************************************************************************************************************/
 
 
@@ -425,13 +425,13 @@ public:
 		/*
 		 * Compliancy of the robot.
 		 */
-
+/*
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
 			if (torque_difference[j] > thresholds[j])
 				target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
 		}
-
+*/
 		/***************************************************************************************************************************************************/
 
 
