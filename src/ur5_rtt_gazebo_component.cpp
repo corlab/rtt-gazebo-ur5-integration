@@ -47,7 +47,8 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+		/*RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.*/
+			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 1500  , 15000 , 2700 , 2700 , 5000 }) , Ki({0 , 2 , 0 , 0 , 0 , 0 }) , Kd({0 ,2 , 0 , 0 , 0 , 0})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -172,8 +173,10 @@ public:
 				if (!error_file)
 					RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
 
-		target_value[0] = 0 ;
-		target_value[1] = -0.1 ;
+
+
+		target_value[0] = 0;
+		target_value[1] = -0.1;
 		target_value[2] =  3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
@@ -186,6 +189,14 @@ public:
 		jnt_width[4] = 1.57 - -1.4;
 		jnt_width[5] = 3.14 - -1.57;
 		RTT::log(RTT::Warning) << "Done configuring robot position" << RTT::endlog();
+
+
+		/*// To launch data recording from a different start point.
+		jnt_it[0] = 2;
+
+			target_value[0] =  jnt_it[0]*jnt_width[0]/5 + (jnt_width[0]/5) * ((((float) rand()) / (float) RAND_MAX)); //0 ;
+			RTT::log(RTT::Warning) << "Test trgt value 0: " <<  target_value[0] << RTT::endlog();
+		 */
 
 		thresholds[0] = 31;
 		thresholds[1] = 12; //12;
@@ -200,7 +211,6 @@ public:
 		jnt_effort[0] = 28;
 		jnt_effort[0] = 28;
 		jnt_effort[0] = 28;
-
 
 
 
@@ -221,7 +231,7 @@ public:
 		 * Data recording part
 		*/
 
-		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
+		if ((nb_iteration == 2910) || (nb_iteration == 2920) || (nb_iteration == 2930) || (nb_iteration == 2940) || (nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990) || (nb_iteration == 3000) ) // To check if position is stable.
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -232,6 +242,7 @@ public:
 		}
 
 
+/*
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 
@@ -244,7 +255,7 @@ public:
 
 					// Computing the mean of the torques.
 
-					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/5.0;
+					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/10.0;
 
 					data_file << "trq "<< mean_of_torques << " ; ";
 
@@ -308,6 +319,7 @@ public:
 										{
 											target_value[0] = 0;
 											jnt_it[0] = 0;
+*/											/*
 											 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
 																	RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
 																	auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
@@ -320,7 +332,8 @@ public:
 																	RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
 																	model_links_[links_idx[nb_links-1]]->UpdateMass();
 																	RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
-										}
+											*/
+/*										}
 										else
 										{
 											target_value[0] = jnt_it[0]*jnt_width[0]/5 + (jnt_width[0]/5) * ((((float) rand()) / (float) RAND_MAX));
@@ -344,7 +357,7 @@ public:
 
 
 	}
-
+*/
 
 
 
@@ -402,8 +415,8 @@ public:
 		 * ELM part:
 		 * Computing the difference between current torque and awaited torque for each joint.
 		 */
-
 		/*
+
 		// Create vector containing awaited position.
 		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
 		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
@@ -412,7 +425,7 @@ public:
 		RealVectorPtr result = elm->evaluate(inputdata);
 		//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
 
-		//error_file << "{" ;
+		error_file << "{" ;
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
@@ -422,9 +435,9 @@ public:
 
 			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
 			//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
-			//error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
 		}
-		//error_file << "}" << std::endl;
+		error_file << "}" << std::endl;
 		*/
 
 		/***************************************************************************************************************************************************/
@@ -436,8 +449,8 @@ public:
 		 * Compliancy of the robot.
 		 */
 
-		/*
-		if (sim_id > 3000)
+/*
+		if ((sim_id > 3000)&&(sim_id%333))
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -456,7 +469,7 @@ public:
 				}
 			}
 		}
-		*/
+*/
 		/***************************************************************************************************************************************************/
 
 
@@ -480,6 +493,8 @@ public:
 				control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
 				last_error[j] = error_value[j];
 				pid_it = 0;
+
+				RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << cumulative_error[j] << RTT::endlog() ;
 			}
 		// For tuning PID.
 		//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
@@ -488,7 +503,7 @@ public:
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
-			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/dynStepSize);
+			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/*/dynStepSize*/);
 		}
 
 		/***************************************************************************************************************************************************/
