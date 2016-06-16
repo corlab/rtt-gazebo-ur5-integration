@@ -47,8 +47,8 @@ public:
 	// BEST  Kp({2700 , 2700  , 2700 , 2700 , 2700 , 2700 }) , Ki({8.7 , 8.7  , 8.7  , 8.7  , 8.7  , 8.7 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 209250})
 
 	UR5RttGazeboComponent(std::string const& name) :
-		/*RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.*/
-			RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0), cumulative_error(0), last_error(0), dynStepSize(1) , pid_it(5) ,Kp({10000 , 1500  , 15000 , 2700 , 2700 , 5000 }) , Ki({0 , 2 , 0 , 0 , 0 , 0 }) , Kd({0 ,2 , 0 , 0 , 0 , 0})  // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+	/*	RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 1000 }) , Ki({0.4 , 0.4 , 0.4 , 0.2 , 0.2 , 0.4 }) , Kd({41850 ,41850 , 41850 , 41850 , 41850 , 37850}) , Ks({0,0,0,0,0,0}) */// HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , elm_id(0) , random_pos(false) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,nb_recording(0), jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -62,6 +62,18 @@ public:
 
 		l1 = 0.7; // find real values later !!
 		l2 = 0.9;// find real values later !!
+
+		}
+
+
+	double constrainCommand(double eff_max , double eff_min, double command)
+		{
+			if (command >= eff_max)
+				return eff_max;
+			else if (command <= eff_min)
+				return eff_min;
+			else
+				return command;
 
 		}
 
@@ -155,13 +167,17 @@ public:
 			error_value.push_back(0);
 			cumulative_error.push_back(0);
 			last_error.push_back(0);
+			errorI.push_back(0);
+			error_derivative.push_back(0);
 			control_value.push_back(0);
 			target_value.push_back(0);
 			torque_difference.push_back(0);
-			jnt_it.push_back(0);
+			jnt_it.push_back(1);
 			jnt_width.push_back(0);
 			thresholds.push_back(0);
 			jnt_effort.push_back(0);
+			nb_recording.push_back(0);
+
 
 		}
 		RTT::log(RTT::Warning) << "Done configuring PIDs" << RTT::endlog();
@@ -198,21 +214,29 @@ public:
 			RTT::log(RTT::Warning) << "Test trgt value 0: " <<  target_value[0] << RTT::endlog();
 		 */
 
-		thresholds[0] = 31;
-		thresholds[1] = 12; //12;
-		thresholds[2] = 159; //30; // see if smaller could be ok. (if the position difference is not high).
-		thresholds[3] = 30;//29;
-		thresholds[4] = 29;//29;
-		thresholds[5] = 40;// 40;
+		thresholds[0] = 2;//31;
+		thresholds[1] = 2;//12; //12;
+		thresholds[2] = 2;//159; //30; // see if smaller could be ok. (if the position difference is not high).
+		thresholds[3] = 2;//30;//29;
+		thresholds[4] = 2;//29;//29;
+		thresholds[5] = 10;//40;// 40;
 
 		jnt_effort[0] = 150;
-		jnt_effort[0] = 150;
-		jnt_effort[0] = 150;
-		jnt_effort[0] = 28;
-		jnt_effort[0] = 28;
-		jnt_effort[0] = 28;
+		jnt_effort[1] = 150;
+		jnt_effort[2] = 150;
+		jnt_effort[3] = 28;
+		jnt_effort[4] = 28;
+		jnt_effort[5] = 28;
 
+		nb_recording[0] = 1.0;
+		nb_recording[1] = 1.0;
+		nb_recording[2] = 1.0;
+		nb_recording[3] = 1.0;
+		nb_recording[4] = 10.0;
+		nb_recording[5] = 1.0;
 
+		jnt_it[1] = -1;
+		jnt_it[2] = -1;
 
 		return true;
 	}
@@ -230,7 +254,7 @@ public:
 		/*
 		 * Data recording part
 		*/
-
+/*
 		if ((nb_iteration == 2910) || (nb_iteration == 2920) || (nb_iteration == 2930) || (nb_iteration == 2940) || (nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990) || (nb_iteration == 3000) ) // To check if position is stable.
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -242,7 +266,7 @@ public:
 		}
 
 
-/*
+
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
 
@@ -274,52 +298,83 @@ public:
 
 
 			// Changes desired position  of each joint.
-		if ((jnt_it[5]) < 4)
+					if ((jnt_it[5]) < nb_recording[5])
 					{
-						target_value[5] = jnt_it[5]*jnt_width[5]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
-						jnt_it[5]++;
+						jnt_it[5] = jnt_it[5]+1;
+
+						if (random_pos)
+						{
+							target_value[5] = jnt_it[5]*jnt_width[5]/nb_recording[5] + (jnt_width[5]/nb_recording[5]) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
+						}
+						else
+						{
+							target_value[5] = jnt_it[5]*(jnt_width[5]/nb_recording[5]) -1.57;
+						}
 					}
 					else
 					{
-						if ((jnt_it[4]) < 4)
+
+						if ((jnt_it[4]) < nb_recording[4])
 						{
-							target_value[4] = jnt_it[4]*jnt_width[4]/5 + (jnt_width[5]/5) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
+							if (random_pos)
+								target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] + (jnt_width[5]/nb_recording[4]) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
+							else
+								target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] -1.4;
+
 							jnt_it[4]++;
 
 						}
 						else
 						{
-							if ( jnt_it[3] <4)
+							if ( jnt_it[3] <nb_recording[3])
 							{
-								target_value[3] = jnt_it[3]*jnt_width[3]/5 + (jnt_width[3]/5) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
+								if (random_pos)
+									target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] + (jnt_width[3]/nb_recording[3]) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
+								else
+									target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] -3.14;
 								jnt_it[3]++;
 							}
 							else
 							{
-								if ( jnt_it[2] > -4)
+								if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] < 1.57))
 								{
-									target_value[2] = jnt_it[2]*jnt_width[2]/5 - (jnt_width[2]/5) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									if (random_pos)
+										target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2] + (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									else
+										target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2]  + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									jnt_it[2]--;
+								}
+								else if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] > 1.57))
+								{
+									if (random_pos)
+										target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2] - (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+									else
+										target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2]  -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
 									jnt_it[2]--;
 								}
 								else
 								{
-									if ((jnt_it[1] ) > -4)
+									if ((jnt_it[1] ) > -(nb_recording[1]))
 									{
-										target_value[1] = jnt_it[1]*jnt_width[1]/5 - (jnt_width[1]/5) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
+										if (random_pos)
+											target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] - (jnt_width[1]/nb_recording[1]) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
+										else
+											target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] -0.1;
+
 										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
 										jnt_it[1]--;
 									}
 									else
 									{
 										target_value[1] = -0.1;
-										jnt_it[1] = 0;
+										jnt_it[1] = -1;
 										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
 
-										if (jnt_it[0] >= 4)
+										if (jnt_it[0] >= nb_recording[0])
 										{
 											target_value[0] = 0;
-											jnt_it[0] = 0;
-*/											/*
+											jnt_it[0] = 1;
+*/										/*
 											 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
 																	RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
 																	auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
@@ -336,22 +391,27 @@ public:
 /*										}
 										else
 										{
-											target_value[0] = jnt_it[0]*jnt_width[0]/5 + (jnt_width[0]/5) * ((((float) rand()) / (float) RAND_MAX));
+											if (random_pos)
+												target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0] + (jnt_width[0]/nb_recording[0]) * ((((float) rand()) / (float) RAND_MAX));
+											else
+												target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0];
 											jnt_it[0]++;
 										}
 									}
-
-									target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
-									jnt_it[2] = 0;
+									if (target_value[1] < 1.57)
+										target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+									else
+										target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+									jnt_it[2] = -1;
 								}
 								target_value[3] = -3.14;
-								jnt_it[3] = 0;
+								jnt_it[3] = 1;
 							}
 							target_value[4] = -1.4;
-							jnt_it[4] = 0;
+							jnt_it[4] = 1;
 						}
 						target_value[5] = -1.57;
-						jnt_it[5] = 0;
+						jnt_it[5] = 1;
 					}
 
 
@@ -415,8 +475,21 @@ public:
 		 * ELM part:
 		 * Computing the difference between current torque and awaited torque for each joint.
 		 */
-		/*
 
+
+
+		elm_id++;
+
+		if ((elm_id == 910) || (elm_id == 920) || (elm_id == 930) || (elm_id == 940) || (elm_id == 950) || (elm_id == 960) || (elm_id == 970) || (elm_id == 980) || (elm_id == 990) || (elm_id == 1000) ) // To check if position is stable.
+		{
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+				gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+				inter_torque_elm[j].push_back(a1.Dot(w1.body1Torque));
+			}
+		}
+		/*
 		// Create vector containing awaited position.
 		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
 		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
@@ -449,27 +522,69 @@ public:
 		 * Compliancy of the robot.
 		 */
 
-/*
-		if ((sim_id > 3000)&&(sim_id%333))
+
+		if ((sim_id > 3000)&&(elm_id >= 1000))
 		{
+		elm_id = 0;
+
+
+
+
+						// ********************************************************************************************************************************
+					// * ELM part:
+					// * Computing the difference between current torque and awaited torque for each joint.
+					 // Create vector containing awaited position.
+
+					RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
+					for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
+
+					// Create vector containing the torque which should be applied.
+					RealVectorPtr result = elm->evaluate(inputdata);
+
+						error_file << "{" ;
+
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
+
+
+				double mean_of_torques_elm = 0;
+				mean_of_torques_elm = (std::accumulate((inter_torque_elm[j]).begin(),(inter_torque_elm[j]).end(), 0))/10.0;
+
+
+				torque_difference[j] = result->getValue(j) - mean_of_torques_elm;
+				//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
+				error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " <<  mean_of_torques_elm << " ;";
+
+					// ********************************************************************************************************************************
+
+
+
+
+
+				// ********************************************************************************************************************************
+					// * Compliance part:
+
 				if (abs(torque_difference[j]) > thresholds[j])
 				{
-					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-					error_file << "{" ;
-					error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
-					error_file << "tgtPos" << target_value[j];
-					target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-					error_file << "newPos" << target_value[j];
-					error_file << "}" << std::endl;
+				//	gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+				//	gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+				//	error_file << "{" ;
+				//	error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+				//	error_file << "tgtPos" << target_value[j];
+				//	target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+				//	error_file << "newPos" << target_value[j];
+				//	error_file << "}" << std::endl;
 
 					RTT::log(RTT::Warning) << "Joint " << j << "set to " << target_value[j] << RTT::endlog();
 				}
+				inter_torque_elm[j] = {0};
+				mean_of_torques_elm = 0;
+
 			}
+					error_file << "}" << std::endl;
+
 		}
-*/
+
 		/***************************************************************************************************************************************************/
 
 
@@ -486,16 +601,33 @@ public:
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
+				//Regular PID
+			/*
 				error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-				control_value[j] = error_value[j]*Kp[j];
+				error_derivative[j] = error_value[j]-last_error[j];
+				//control_value[j] = error_value[j]*Kp[j];
 				cumulative_error[j] = cumulative_error[j] + error_value[j];
-				control_value[j] = control_value[j] + cumulative_error[j]*Ki[j]*dynStepSize;
-				control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
+				//control_value[j] = control_value[j] + cumulative_error[j]*Ki[j]*dynStepSize;
+				//control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
+				control_value[j] = constrainCommand(jnt_effort[j] , -jnt_effort[j] , error_value[j]*Kp[j] + cumulative_error[j]*Ki[j]*dynStepSize + error_derivative[j]*(Kd[j]/dynStepSize));
+				last_error[j] = error_value[j];
+				pid_it = 0;
+			*/
+
+				// PID anti wind-up
+
+				error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+				error_derivative[j] = error_value[j]-last_error[j];
+				control_value[j] = constrainCommand( jnt_effort[j], -jnt_effort[j] , Kp[j]*error_value[j] + (Kd[j]/dynStepSize)*error_derivative[j] + errorI[j]);
+				errorI[j] = errorI[j] + dynStepSize*(Ki[j]*error_value[j] + Ks[j]*(control_value[j] - Kp[j]*error_value[j] - (Kd[j]/dynStepSize)*error_derivative[j] - errorI[j] ));
 				last_error[j] = error_value[j];
 				pid_it = 0;
 
-				RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << cumulative_error[j] << RTT::endlog() ;
+				//RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << errorI[j] << RTT::endlog() ;
 			}
+
+
+
 		// For tuning PID.
 		//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
 
@@ -503,7 +635,9 @@ public:
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
 		{
-			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]/*/dynStepSize*/);
+			gazebo_joints_[joints_idx[j]]->SetForce(0 , control_value[j]);
+			//RTT::log(RTT::Error) << j << " " << target_value[j]  << RTT::endlog() ;
+
 		}
 
 		/***************************************************************************************************************************************************/
@@ -533,8 +667,13 @@ protected:
 	std::ofstream data_file;
 	std::ofstream error_file;
 
+	bool random_pos;
+	std::vector<double> nb_recording;
+
 	int nb_iteration; // number of hook iterations for one tested position.
 	int sim_id; // number of angle positions tested.
+
+	int elm_id;
 
 	std::vector<int> joints_idx;
 	std::vector<int> links_idx;
@@ -567,8 +706,11 @@ protected:
 	std::vector<double> Kp;
 	std::vector<double> Kd;
 	std::vector<double> Ki;
+	std::vector<double> Ks;
 	std::vector<double> control_value;
 	std::vector<double> target_value;
+	std::vector<double> errorI;
+	std::vector<double> error_derivative;
 
 	int pid_it;
 
@@ -576,6 +718,8 @@ protected:
 	// ELM Learner
 	ExtremeLearningMachinePtr elm;
 	std::vector<double> torque_difference;
+	// Variable to save intermediate robot position - to decide if the data will be written in the file.
+	std::vector< std::vector<double> > inter_torque_elm;
 
 	// Compliancy
 	std::vector<double> thresholds;
