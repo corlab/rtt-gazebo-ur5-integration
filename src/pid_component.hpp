@@ -35,6 +35,7 @@ public:
     void updateHook();
     void stopHook();
     void cleanupHook();
+    double constrainCommand(double eff_max , double eff_min, double command);
 
     RTT::OutputPort<std::vector<double>> cmdJntTrq_Port;
 
@@ -58,6 +59,8 @@ public:
     std::vector<double> Kd;
     std::vector<double> Ki;
     int nb_joints;
+
+    std::vector<double> jnt_effort;
 
 
 };

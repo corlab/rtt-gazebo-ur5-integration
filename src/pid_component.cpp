@@ -30,7 +30,7 @@
 #include "pid_component.hpp"
 
 
-PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), nb_joints(0) , dynStepSize(1) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({10000 , 15000  , 15000 , 2700 , 2700 , 5000 }) , Ki({2 , 2 , 2 , 1 , 1 , 2 }) , Kd({209250 ,209250 , 209250 , 209250 , 209250 , 189250})  {
+PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), jnt_effort(0) , nb_joints(0) , dynStepSize(1) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({2000 , 3000 , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850})  {
 
 	this->addPort("cmdJntTrq", cmdJntTrq_Port);
     trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
@@ -42,6 +42,18 @@ PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), 
 
 }
 // dynStepsize at frequency of the component.
+
+
+double PIDController::constrainCommand(double eff_max , double eff_min, double command)
+		{
+			if (command >= eff_max)
+				return eff_max;
+			else if (command <= eff_min)
+				return eff_min;
+			else
+				return command;
+
+		}
 
 bool PIDController::startHook() {
     return true;
@@ -71,8 +83,15 @@ bool PIDController::configureHook() {
 		trqCmdOutput.push_back(0);
 		targetPosition.push_back(0);
 		currPosition.push_back(0);
-
+		jnt_effort.push_back(0);
    }
+
+    jnt_effort[0] = 150;
+    jnt_effort[1] = 150;
+    jnt_effort[2] = 150;
+    jnt_effort[3] = 28;
+    jnt_effort[4] = 28;
+    jnt_effort[5] = 28;
 
 	RTT::log(RTT::Error) << "PIDController configured." << RTT::endlog();
 
@@ -114,7 +133,7 @@ void PIDController::updateHook() {
 
 				//RTT::log(RTT::Error) << "Joint " << j << " ki computed. "<< RTT::endlog();
 
-				trqCmdOutput[j] = trqCmdOutput[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
+				trqCmdOutput[j] = constrainCommand(jnt_effort[j] , -jnt_effort[j] ,  trqCmdOutput[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize));
 
 				//RTT::log(RTT::Error) << "Joint " << j << " torque command computed. "<< RTT::endlog();
 
@@ -129,7 +148,7 @@ void PIDController::updateHook() {
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }
-		RTT::log(RTT::Error) << "P: Trqcmnd: " << trqCmdOutput[3] << RTT::endlog();
+		RTT::log(RTT::Error) << "P: Trqcmnd: " << trqCmdOutput[1] << RTT::endlog();
 
 
 	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();

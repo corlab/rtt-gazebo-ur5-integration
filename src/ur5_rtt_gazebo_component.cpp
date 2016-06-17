@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(1) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(5) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
