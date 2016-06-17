@@ -48,7 +48,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 	/*	RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 1000 }) , Ki({0.4 , 0.4 , 0.4 , 0.2 , 0.2 , 0.4 }) , Kd({41850 ,41850 , 41850 , 41850 , 41850 , 37850}) , Ks({0,0,0,0,0,0}) */// HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
-			RTT::TaskContext(name), nb_static_joints(0) , elm_id(0) , random_pos(false) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,nb_recording(0), jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , ee_mass({0.00001 , 5 , 1 , 3}) , mass_id(0) , elm_id(0) , random_pos(false) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,nb_recording(0), jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -74,8 +74,26 @@ public:
 				return eff_min;
 			else
 				return command;
-
 		}
+
+	void eeMass(double mass , gazebo::physics::ModelPtr model)
+	{
+		// Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
+		RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
+		auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
+		RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
+		inertial->SetMass(mass);
+		double inertia_value;
+		inertia_value = (mass*0.05*0.05)/6;
+		RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
+		inertial->SetInertiaMatrix(inertia_value, inertia_value, inertia_value, 0, 0, 0);
+		RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
+		model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
+		RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
+		model_links_[links_idx[nb_links-1]]->UpdateMass();
+		RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
+	}
+
 
 	//! Called from gazebo
 	virtual bool gazeboConfigureHook(gazebo::physics::ModelPtr model) {
@@ -215,7 +233,7 @@ public:
 		 */
 
 		thresholds[0] = 2;//31;
-		thresholds[1] = 2;//12; //12;
+		thresholds[1] = 8;//12; //12;
 		thresholds[2] = 2;//159; //30; // see if smaller could be ok. (if the position difference is not high).
 		thresholds[3] = 2;//30;//29;
 		thresholds[4] = 2;//29;//29;
@@ -228,15 +246,19 @@ public:
 		jnt_effort[4] = 28;
 		jnt_effort[5] = 28;
 
-		nb_recording[0] = 1.0;
-		nb_recording[1] = 1.0;
-		nb_recording[2] = 1.0;
-		nb_recording[3] = 1.0;
-		nb_recording[4] = 10.0;
-		nb_recording[5] = 1.0;
+		nb_recording[0] = 5.0;
+		nb_recording[1] = 5.0;
+		nb_recording[2] = 5.0;
+		nb_recording[3] = 5.0;
+		nb_recording[4] = 5.0;
+		nb_recording[5] = 5.0;
 
 		jnt_it[1] = -1;
 		jnt_it[2] = -1;
+
+
+		eeMass(5 , model);
+
 
 		return true;
 	}
@@ -254,8 +276,8 @@ public:
 		/*
 		 * Data recording part
 		*/
-/*
-		if ((nb_iteration == 2910) || (nb_iteration == 2920) || (nb_iteration == 2930) || (nb_iteration == 2940) || (nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990) || (nb_iteration == 3000) ) // To check if position is stable.
+
+		if ((nb_iteration == 3410) || (nb_iteration == 3420) || (nb_iteration == 3430) || (nb_iteration == 3440) || (nb_iteration == 3450) || (nb_iteration == 3460) || (nb_iteration == 3470) || (nb_iteration == 3480) || (nb_iteration == 3490) || (nb_iteration == 3500) ) // To check if position is stable.
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -267,7 +289,7 @@ public:
 
 
 
-		if (nb_iteration >= 3000) // For stabilisation of the torque.
+		if (nb_iteration >= 3500) // For stabilisation of the torque.
 		{
 
 
@@ -279,7 +301,7 @@ public:
 
 					// Computing the mean of the torques.
 
-					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/10.0;
+					mean_of_torques = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0.0))/10.0;
 
 					data_file << "trq "<< mean_of_torques << " ; ";
 
@@ -297,127 +319,122 @@ public:
 
 
 
-			// Changes desired position  of each joint.
-					if ((jnt_it[5]) < nb_recording[5])
-					{
-						jnt_it[5] = jnt_it[5]+1;
+		// Changes desired position  of each joint.
+				if ((jnt_it[5]) < nb_recording[5])
+				{
+					jnt_it[5] = jnt_it[5]+1;
 
-						if (random_pos)
-						{
-							target_value[5] = jnt_it[5]*jnt_width[5]/nb_recording[5] + (jnt_width[5]/nb_recording[5]) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
-						}
-						else
-						{
-							target_value[5] = jnt_it[5]*(jnt_width[5]/nb_recording[5]) -1.57;
-						}
+					if (random_pos)
+					{
+						target_value[5] = jnt_it[5]*jnt_width[5]/nb_recording[5] + (jnt_width[5]/nb_recording[5]) * ((((float) rand()) / (float) RAND_MAX)) -1.57;
 					}
 					else
 					{
+						target_value[5] = jnt_it[5]*(jnt_width[5]/nb_recording[5]) -1.57;
+					}
+				}
+				else
+				{
 
-						if ((jnt_it[4]) < nb_recording[4])
+					if ((jnt_it[4]) < nb_recording[4])
+					{
+						if (random_pos)
+							target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] + (jnt_width[5]/nb_recording[4]) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
+						else
+							target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] -1.4;
+
+						jnt_it[4]++;
+
+					}
+					else
+					{
+						if ( jnt_it[3] <nb_recording[3])
 						{
 							if (random_pos)
-								target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] + (jnt_width[5]/nb_recording[4]) * ((((float) rand()) / (float) RAND_MAX)) -1.4;
+								target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] + (jnt_width[3]/nb_recording[3]) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
 							else
-								target_value[4] = jnt_it[4]*jnt_width[4]/nb_recording[4] -1.4;
-
-							jnt_it[4]++;
-
+								target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] -3.14;
+							jnt_it[3]++;
 						}
 						else
 						{
-							if ( jnt_it[3] <nb_recording[3])
+							if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] < 1.57))
 							{
 								if (random_pos)
-									target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] + (jnt_width[3]/nb_recording[3]) * ((((float) rand()) / (float) RAND_MAX)) -3.14;
+									target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2] + (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
 								else
-									target_value[3] = jnt_it[3]*jnt_width[3]/nb_recording[3] -3.14;
-								jnt_it[3]++;
+									target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2]  + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+								jnt_it[2]--;
+							}
+							else if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] > 1.57))
+							{
+								if (random_pos)
+									target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2] - (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+								else
+									target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2]  -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+								jnt_it[2]--;
 							}
 							else
 							{
-								if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] < 1.57))
+								if ((jnt_it[1] ) > -(nb_recording[1]))
 								{
 									if (random_pos)
-										target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2] + (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+										target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] - (jnt_width[1]/nb_recording[1]) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
 									else
-										target_value[2] = jnt_it[2]*jnt_width[2]/nb_recording[2]  + 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
-									jnt_it[2]--;
-								}
-								else if (( jnt_it[2] > -(nb_recording[2]))&&(target_value[1] > 1.57))
-								{
-									if (random_pos)
-										target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2] - (jnt_width[2]/nb_recording[2]) * ((((float) rand()) / (float) RAND_MAX)) -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
-									else
-										target_value[2] = -jnt_it[2]*jnt_width[2]/nb_recording[2]  -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
-									jnt_it[2]--;
+										target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] -0.1;
+
+									jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
+									jnt_it[1]--;
 								}
 								else
 								{
-									if ((jnt_it[1] ) > -(nb_recording[1]))
+									target_value[1] = -0.1;
+									jnt_it[1] = -1;
+									jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
+
+									if (jnt_it[0] >= nb_recording[0])
+									{
+										target_value[0] = 0;
+										jnt_it[0] = 1;
+
+										mass_id++;
+										if (mass_id >= ee_mass.size())
+										{
+											mass_id = 0;
+										}
+										eeMass(ee_mass[mass_id] , model);
+										RTT::log(RTT::Error) << "Mass set to " << ee_mass[mass_id] << " kg. " << RTT::endlog();
+
+									}
+									else
 									{
 										if (random_pos)
-											target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] - (jnt_width[1]/nb_recording[1]) * ((((float) rand()) / (float) RAND_MAX)) -0.1;
+											target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0] + (jnt_width[0]/nb_recording[0]) * ((((float) rand()) / (float) RAND_MAX));
 										else
-											target_value[1] = jnt_it[1]*jnt_width[1]/nb_recording[1] -0.1;
-
-										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
-										jnt_it[1]--;
+											target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0];
+										jnt_it[0]++;
 									}
-									else
-									{
-										target_value[1] = -0.1;
-										jnt_it[1] = -1;
-										jnt_width[2] = abs(3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4 -  (3.14 - (+target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 3.14 + 0.8));
-
-										if (jnt_it[0] >= nb_recording[0])
-										{
-											target_value[0] = 0;
-											jnt_it[0] = 1;
-*/										/*
-											 // Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
-																	RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
-																	auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
-																	RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
-																	inertial->SetMass(1.0);
-																	RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
-																	inertial->SetInertiaMatrix(0.000416667, 0.000416667, 0.000416667, 0, 0, 0);
-																	RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
-																	model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
-																	RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
-																	model_links_[links_idx[nb_links-1]]->UpdateMass();
-																	RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
-											*/
-/*										}
-										else
-										{
-											if (random_pos)
-												target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0] + (jnt_width[0]/nb_recording[0]) * ((((float) rand()) / (float) RAND_MAX));
-											else
-												target_value[0] = jnt_it[0]*jnt_width[0]/nb_recording[0];
-											jnt_it[0]++;
-										}
-									}
-									if (target_value[1] < 1.57)
-										target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
-									else
-										target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
-									jnt_it[2] = -1;
 								}
-								target_value[3] = -3.14;
-								jnt_it[3] = 1;
+								if (target_value[1] < 1.57)
+									target_value[2] = 3.14 - (+ target_value[1] + acos(sin(-target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;
+								else
+									target_value[2] = -3.14 + (- target_value[1] + 1.7 - acos(cos(-target_value[1]+1.7)*l1/l2)) + 0.3 +0.4;
+								jnt_it[2] = -1;
 							}
-							target_value[4] = -1.4;
-							jnt_it[4] = 1;
+							target_value[3] = -3.14;
+							jnt_it[3] = 1;
 						}
-						target_value[5] = -1.57;
-						jnt_it[5] = 1;
+						target_value[4] = -1.4;
+						jnt_it[4] = 1;
 					}
+					target_value[5] = -1.57;
+					jnt_it[5] = 1;
+				}
 
 
 
-	}
-*/
+}
+
 
 
 
@@ -427,43 +444,43 @@ public:
 		/***************************************************************************************************************************************************/
 
 
-		/*
-		 * Video recording part
-		 */
-		/*
-		if (sim_id < 5000)
-		{
-			target_value[0] = -1;
-			target_value[1] = -0.7;
-			target_value[2] = 1.3;
-			target_value[3] = -2;
-			target_value[4] = -1.4;
-			target_value[5] = -1.57;
-		}
-		else if ((sim_id  > 5000) && (sim_id < 6500))
-		{
-
-			target_value[2] = target_value[2] - 0.0006;
-
-		}
-		else if ((sim_id  > 6500) && (sim_id < 10200))
-		{
-			target_value[0] = target_value[0] - 0.0006;
-
-		}
-		else if ((sim_id  > 10200) && (sim_id < 11700))
-		{
-			target_value[2] = target_value[2] + 0.0006;
-		}
-
-
-		target_value[0] = -1;
-		target_value[1] = -1.57;
-		target_value[2] = 1.57;
-		target_value[3] = -1.57;
-		target_value[4] = -1.57;
-		target_value[5] = -1.57;
-		 */
+	//	/*
+	//	 * Video recording part
+	//	 */
+	//	/*
+	//	if (sim_id < 5000)
+	//	{
+	//		target_value[0] = -1;
+	//		target_value[1] = -0.7;
+	//		target_value[2] = 1.3;
+	//		target_value[3] = -2;
+	//		target_value[4] = -1.4;
+	//		target_value[5] = -1.57;
+	//	}
+	//	else if ((sim_id  > 5000) && (sim_id < 6500))
+	//	{
+	//
+	//		target_value[2] = target_value[2] - 0.0006;
+	//
+	//	}
+	//	else if ((sim_id  > 6500) && (sim_id < 10200))
+	//	{
+	//		target_value[0] = target_value[0] - 0.0006;
+	//
+	//	}
+	//	else if ((sim_id  > 10200) && (sim_id < 11700))
+	//	{
+	//		target_value[2] = target_value[2] + 0.0006;
+	//	}
+	//
+	//
+	//	target_value[0] = -1;
+	//	target_value[1] = -1.57;
+	//	target_value[2] = 1.57;
+	//	target_value[3] = -1.57;
+	//	target_value[4] = -1.57;
+	//	target_value[5] = -1.57;
+	//	 */
 
 		/***************************************************************************************************************************************************/
 
@@ -523,69 +540,129 @@ public:
 		 */
 
 
-		if ((sim_id > 3000)&&(elm_id >= 1000))
+//	if ((sim_id > 3500)&&(elm_id >= 1000))
+//	{
+//	elm_id = 0;
+//
+//
+//
+//
+//					// ********************************************************************************************************************************
+//				// * ELM part:
+//				// * Computing the difference between current torque and awaited torque for each joint.
+//				 // Create vector containing awaited position.
+//
+//				RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
+//				for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
+//
+//				// Create vector containing the torque which should be applied.
+//				RealVectorPtr result = elm->evaluate(inputdata);
+//
+//					error_file << "{" ;
+//
+//		for (unsigned j = 0; j < joints_idx.size(); j++)
+//		{
+//
+//
+//			double mean_of_torques_elm = 0;
+//			mean_of_torques_elm = (std::accumulate((inter_torque_elm[j]).begin(),(inter_torque_elm[j]).end(), 0))/10.0;
+//
+//
+//			torque_difference[j] = result->getValue(j) - mean_of_torques_elm;
+//			//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
+//			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " <<  mean_of_torques_elm << " ;";
+//
+//				// ********************************************************************************************************************************
+//
+//
+//
+//
+//
+//			// ********************************************************************************************************************************
+//				// * Compliance part:
+//
+//
+//			if (abs(torque_difference[j]) > thresholds[j])
+//			{
+//			//	gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+//			//	gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+//			//	error_file << "{" ;
+//			//	error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+//			//	error_file << "tgtPos" << target_value[j];
+//		// Test: the new target value is the current position. 	To be evaluated because there is no deformation compared to soft robots!
+		//	target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+//			//	error_file << "newPos" << target_value[j];
+//			//	error_file << "}" << std::endl;
+//
+//
+		// Test: the new target value: we add an angle: has to be set for each joint>
+//				if (torque_difference[j] > 0)
+//					target_value[j] = target_value[j] + 0.2;
+//				else
+//					target_value[j] = target_value[j] - 0.2;
+//
+//				RTT::log(RTT::Warning) << "Joint " << j << "set to " << target_value[j] << RTT::endlog();
+//			}
+//			inter_torque_elm[j] = {0};
+//			mean_of_torques_elm = 0;
+//
+//		}
+//				error_file << "}" << std::endl;
+//
+//	}
+
+		/***************************************************************************************************************************************************/
+
+
+
+		/***************************************************************************************************************************************************/
+
+		/*
+		 *  Try to guess which payload is currently at the end-effector.
+		 */
+
+
+
+		if ((sim_id == 3410) || (sim_id == 3420) || (sim_id == 3430) || (sim_id == 3440) || (sim_id == 3450) || (sim_id == 3460) || (sim_id == 3470) || (sim_id == 3480) || (sim_id == 3490) || (sim_id == 3500) ) // To check if position is stable.
+				{
+					for (unsigned j = 0; j < joints_idx.size(); j++)
+					{
+						gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+						gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+						inter_torque[j].push_back(a1.Dot(w1.body1Torque));
+					}
+				}
+		if (sim_id == 3500)
 		{
-		elm_id = 0;
-
-
-
-
-						// ********************************************************************************************************************************
-					// * ELM part:
-					// * Computing the difference between current torque and awaited torque for each joint.
-					 // Create vector containing awaited position.
-
-					RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
-					for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
-
-					// Create vector containing the torque which should be applied.
-					RealVectorPtr result = elm->evaluate(inputdata);
-
-						error_file << "{" ;
-
+			RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
+			for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
+			// Create vector containing the torque which should be applied.
+			RealVectorPtr result = elm->evaluate(inputdata);
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
+				double mean_of_torques = 0;
+				mean_of_torques= (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/10.0;
+				torque_difference[j] = result->getValue(j) - mean_of_torques;
 
+				//Here, we have to guess the mass. See data to observe the evolution of every mass for one position!
 
-				double mean_of_torques_elm = 0;
-				mean_of_torques_elm = (std::accumulate((inter_torque_elm[j]).begin(),(inter_torque_elm[j]).end(), 0))/10.0;
-
-
-				torque_difference[j] = result->getValue(j) - mean_of_torques_elm;
-				//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
-				error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " <<  mean_of_torques_elm << " ;";
-
-					// ********************************************************************************************************************************
-
-
-
-
-
-				// ********************************************************************************************************************************
-					// * Compliance part:
-
-				if (abs(torque_difference[j]) > thresholds[j])
-				{
-				//	gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-				//	gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-				//	error_file << "{" ;
-				//	error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
-				//	error_file << "tgtPos" << target_value[j];
-				//	target_value[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-				//	error_file << "newPos" << target_value[j];
-				//	error_file << "}" << std::endl;
-
-					RTT::log(RTT::Warning) << "Joint " << j << "set to " << target_value[j] << RTT::endlog();
-				}
-				inter_torque_elm[j] = {0};
-				mean_of_torques_elm = 0;
-
+				mean_of_torques = 0;
+				inter_torque[j] = {0};
 			}
-					error_file << "}" << std::endl;
 
 		}
 
+
+
+
+
+
+
+
+
 		/***************************************************************************************************************************************************/
+
+
 
 
 
@@ -605,10 +682,7 @@ public:
 			/*
 				error_value[j] = target_value[j] -  model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
 				error_derivative[j] = error_value[j]-last_error[j];
-				//control_value[j] = error_value[j]*Kp[j];
 				cumulative_error[j] = cumulative_error[j] + error_value[j];
-				//control_value[j] = control_value[j] + cumulative_error[j]*Ki[j]*dynStepSize;
-				//control_value[j] = control_value[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize);
 				control_value[j] = constrainCommand(jnt_effort[j] , -jnt_effort[j] , error_value[j]*Kp[j] + cumulative_error[j]*Ki[j]*dynStepSize + error_derivative[j]*(Kd[j]/dynStepSize));
 				last_error[j] = error_value[j];
 				pid_it = 0;
@@ -623,7 +697,7 @@ public:
 				last_error[j] = error_value[j];
 				pid_it = 0;
 
-				//RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << errorI[j] << RTT::endlog() ;
+			//	RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << errorI[j] << RTT::endlog() ;
 			}
 
 
@@ -642,6 +716,18 @@ public:
 
 		/***************************************************************************************************************************************************/
 
+
+		/*
+		 * Test for mass modification at the end-effector.
+		 */
+
+		/*
+		if (sim_id == 8000)
+		{
+			RTT::log(RTT::Error) << "entering mass modification " << RTT::endlog() ;
+			eeMass(5.0 , model);
+		}
+		*/
 
 		sim_id ++;
 
@@ -669,6 +755,8 @@ protected:
 
 	bool random_pos;
 	std::vector<double> nb_recording;
+	std::vector<double> ee_mass;
+	int mass_id;
 
 	int nb_iteration; // number of hook iterations for one tested position.
 	int sim_id; // number of angle positions tested.
@@ -711,6 +799,7 @@ protected:
 	std::vector<double> target_value;
 	std::vector<double> errorI;
 	std::vector<double> error_derivative;
+
 
 	int pid_it;
 
