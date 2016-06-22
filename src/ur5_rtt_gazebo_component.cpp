@@ -48,7 +48,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 	/*	RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 1000 }) , Ki({0.4 , 0.4 , 0.4 , 0.2 , 0.2 , 0.4 }) , Kd({41850 ,41850 , 41850 , 41850 , 41850 , 37850}) , Ks({0,0,0,0,0,0}) */// HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
-			RTT::TaskContext(name), nb_static_joints(0) , ee_mass({0.00001 , 5 , 1 , 3}) , mass_id(0) , elm_id(0) , random_pos(false) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,nb_recording(0), jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0) , ee_mass({5, 0.00001 , 1 , 3}) , mass_id(0) , elm_id(0) , random_pos(true) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,nb_recording(0), jnt_effort(0),  torque_difference(0) , torque_difference_0(0) , torque_difference_1(0), torque_difference_5(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -85,7 +85,7 @@ public:
 		inertial->SetMass(mass);
 		double inertia_value;
 		inertia_value = (mass*0.05*0.05)/6;
-		RTT::log(RTT::Error) << "Mass prepared." << RTT::endlog();
+		RTT::log(RTT::Error) << "Mass set to " << mass << RTT::endlog();
 		inertial->SetInertiaMatrix(inertia_value, inertia_value, inertia_value, 0, 0, 0);
 		RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
 		model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
@@ -105,12 +105,15 @@ public:
 
 
 		// ELM model creation.
-		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/elmmodel/data");
-		elm=ExtremeLearningMachine::create(infile);
-		RTT::log(RTT::Warning)  << "Generating testdata with dimensionality: " << elm->getInputDimension() << RTT::endlog();
-		RTT::log(RTT::Warning) << "Expecting results with dimensionality: " << elm->getOutputDimension() << RTT::endlog();
+		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/elmmodel_mass_0/data");
+		elm_0=ExtremeLearningMachine::create(infile);
+		RTT::log(RTT::Warning)  << "Generating testdata with dimensionality: " << elm_0->getInputDimension() << RTT::endlog();
+		RTT::log(RTT::Warning) << "Expecting results with dimensionality: " << elm_0->getOutputDimension() << RTT::endlog();
 		RTT::log(RTT::Error) << "ELM loaded" << RTT::endlog();
-
+		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/models/elmmodel_mass_1/data");
+		elm_1=ExtremeLearningMachine::create(infile);
+		std::string infile("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/models/elmmodel_mass_5/data");
+		elm_5=ExtremeLearningMachine::create(infile);
 
 
 
@@ -190,6 +193,9 @@ public:
 			control_value.push_back(0);
 			target_value.push_back(0);
 			torque_difference.push_back(0);
+			torque_difference_0.push_back(0);
+			torque_difference_1.push_back(0);
+			torque_difference_5.push_back(0);
 			jnt_it.push_back(1);
 			jnt_width.push_back(0);
 			thresholds.push_back(0);
@@ -215,6 +221,14 @@ public:
 		target_value[3] = -3.14;
 		target_value[4] = -1.4;
 		target_value[5] = -1.57;
+
+
+	//	target_value[0] = 0.0221602379990538;
+	//	target_value[1] = -1.30987684310836;
+	//	target_value[2] =  1.53518890257943;
+	//	target_value[3] = -1.96273703325866;
+	//	target_value[4] = -1.60073869056189;
+	//	target_value[5] = 0.914073649111683;
 
 		jnt_width[0] = 6.28;
 		jnt_width[1] = abs(-2.3 - -0.1);
@@ -256,8 +270,9 @@ public:
 		jnt_it[1] = -1;
 		jnt_it[2] = -1;
 
-
-		eeMass(5 , model);
+		//eeMass(0.00001 , model);
+		eeMass(0.00001 , model);
+		mass_id = 1;
 
 
 		return true;
@@ -433,7 +448,7 @@ public:
 
 
 
-}
+		}
 
 
 
@@ -488,56 +503,56 @@ public:
 
 		/***************************************************************************************************************************************************/
 
-		/*
-		 * ELM part:
-		 * Computing the difference between current torque and awaited torque for each joint.
-		 */
-
-
-
-		elm_id++;
-
-		if ((elm_id == 910) || (elm_id == 920) || (elm_id == 930) || (elm_id == 940) || (elm_id == 950) || (elm_id == 960) || (elm_id == 970) || (elm_id == 980) || (elm_id == 990) || (elm_id == 1000) ) // To check if position is stable.
-		{
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-				gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-				inter_torque_elm[j].push_back(a1.Dot(w1.body1Torque));
-			}
-		}
-		/*
-		// Create vector containing awaited position.
-		RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
-		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
-
-		// Create vector containing the torque which should be applied.
-		RealVectorPtr result = elm->evaluate(inputdata);
-		//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
-
-		error_file << "{" ;
-
-		for (unsigned j = 0; j < joints_idx.size(); j++)
-		{
-			// Compute current torque.
-			gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-			gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-
-			torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
-			//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
-			error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
-		}
-		error_file << "}" << std::endl;
-		*/
-
-		/***************************************************************************************************************************************************/
-
-
-
-		/***************************************************************************************************************************************************/
-		/*
-		 * Compliancy of the robot.
-		 */
+//	/*
+//	 * ELM part:
+//	 * Computing the difference between current torque and awaited torque for each joint.
+//	 */
+//
+//
+//
+//	elm_id++;
+//
+//	if ((elm_id == 910) || (elm_id == 920) || (elm_id == 930) || (elm_id == 940) || (elm_id == 950) || (elm_id == 960) || (elm_id == 970) || (elm_id == 980) || (elm_id == 990) || (elm_id == 1000) ) // To check if position is stable.
+//	{
+//		for (unsigned j = 0; j < joints_idx.size(); j++)
+//		{
+//			gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+//			gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+//			inter_torque_elm[j].push_back(a1.Dot(w1.body1Torque));
+//		}
+//	}
+//	/*
+//	// Create vector containing awaited position.
+//	RealVectorPtr inputdata = RealVector::create(elm_0->getInputDimension(), 0.0);
+//	for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
+//
+//	// Create vector containing the torque which should be applied.
+//	RealVectorPtr result = elm_0->evaluate(inputdata);
+//	//RTT::log(RTT::Warning) << "Evaluating [" << inputdata << "] -> [" <<  result << "]" << RTT::endlog();
+//
+//	error_file << "{" ;
+//
+//	for (unsigned j = 0; j < joints_idx.size(); j++)
+//	{
+//		// Compute current torque.
+//		gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+//		gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+//
+//		torque_difference[j] = result->getValue(j) - (a1.Dot(w1.body1Torque));
+//		//RTT::log(RTT::Warning) << "Torque difference: " << torque_difference[j] << RTT::endlog();
+//		error_file << "joint " << j << ": " << torque_difference[j] << " dsrTrq: " << result->getValue(j) << " realTrq: " << (a1.Dot(w1.body1Torque)) << " ;";
+//	}
+//	error_file << "}" << std::endl;
+//	*/
+//
+//	/***************************************************************************************************************************************************/
+//
+//
+//
+//	/***************************************************************************************************************************************************/
+//	/*
+//	 * Compliancy of the robot.
+//	 */
 
 
 //	if ((sim_id > 3500)&&(elm_id >= 1000))
@@ -552,11 +567,11 @@ public:
 //				// * Computing the difference between current torque and awaited torque for each joint.
 //				 // Create vector containing awaited position.
 //
-//				RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
+//				RealVectorPtr inputdata = RealVector::create(elm_0->getInputDimension(), 0.0);
 //				for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
 //
 //				// Create vector containing the torque which should be applied.
-//				RealVectorPtr result = elm->evaluate(inputdata);
+//				RealVectorPtr result = elm_0->evaluate(inputdata);
 //
 //					error_file << "{" ;
 //
@@ -617,41 +632,71 @@ public:
 
 		/***************************************************************************************************************************************************/
 
-		/*
-		 *  Try to guess which payload is currently at the end-effector.
-		 */
-
-
-
-		if ((sim_id == 3410) || (sim_id == 3420) || (sim_id == 3430) || (sim_id == 3440) || (sim_id == 3450) || (sim_id == 3460) || (sim_id == 3470) || (sim_id == 3480) || (sim_id == 3490) || (sim_id == 3500) ) // To check if position is stable.
-				{
-					for (unsigned j = 0; j < joints_idx.size(); j++)
-					{
-						gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-						gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-						inter_torque[j].push_back(a1.Dot(w1.body1Torque));
-					}
-				}
-		if (sim_id == 3500)
-		{
-			RealVectorPtr inputdata = RealVector::create(elm->getInputDimension(), 0.0);
-			for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
-			// Create vector containing the torque which should be applied.
-			RealVectorPtr result = elm->evaluate(inputdata);
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				double mean_of_torques = 0;
-				mean_of_torques= (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/10.0;
-				torque_difference[j] = result->getValue(j) - mean_of_torques;
-
-				//Here, we have to guess the mass. See data to observe the evolution of every mass for one position!
-
-				mean_of_torques = 0;
-				inter_torque[j] = {0};
-			}
-
-		}
-
+//		/*
+//		 *  Try to guess which payload is currently at the end-effector.
+//		 */
+//
+//
+//
+//		if ((sim_id == 3410) || (sim_id == 3420) || (sim_id == 3430) || (sim_id == 3440) || (sim_id == 3450) || (sim_id == 3460) || (sim_id == 3470) || (sim_id == 3480) || (sim_id == 3490) || (sim_id == 3500) ) // To check if position is stable.
+//				{
+//					for (unsigned j = 0; j < joints_idx.size(); j++)
+//					{
+//						gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+//						gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+//						inter_torque[j].push_back(a1.Dot(w1.body1Torque));
+//					}
+//				}
+//		if (sim_id == 3500)
+//		{
+//			RealVectorPtr inputdata = RealVector::create(elm_0->getInputDimension(), 0.0);
+//			for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian());
+//			// Create vector containing the torque which should be applied.
+//			RealVectorPtr result_0 = elm_0->evaluate(inputdata);
+//			RealVectorPtr result_1 = elm_1->evaluate(inputdata);
+//			RealVectorPtr result_5 = elm_5->evaluate(inputdata);
+//
+//			for (unsigned j = 0; j < joints_idx.size(); j++)
+//			{
+//				double mean_of_torques = 0;
+//				mean_of_torques= (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0))/10.0;
+//				torque_difference_0[j] = result_0->getValue(j) - mean_of_torques;
+//				torque_difference_1[j] = result_1->getValue(j) - mean_of_torques;
+//				torque_difference_5[j] = result_5->getValue(j) - mean_of_torques;
+//
+//				mean_of_torques = 0;
+//				inter_torque[j] = {0};
+//			}
+//			double error_0 =  std::inner_product( torque_difference_0.begin(), torque_difference_0.end(), torque_difference_0.begin(), 0.0 );
+//			double error_1 =  std::inner_product( torque_difference_1.begin(), torque_difference_1.end(), torque_difference_1.begin(), 0.0 );
+//			double error_5 =  std::inner_product( torque_difference_5.begin(), torque_difference_5.end(), torque_difference_5.begin(), 0.0 );
+//
+//			if (std::min(error_0 , error_1) == error_0)
+//			{
+//				if (std::min(error_0 , error_2) == error_0)
+//				{
+//					RTT::log(RTT::Warning) << "Payload is the nearest to " << 0 << RTT::endlog();
+//				}
+//				else
+//				{
+//					RTT::log(RTT::Warning) << "Payload is the nearest to " << 2 << RTT::endlog();
+//				}
+//			}
+//			else
+//			{
+//				if (std::min(error_1 , error_2) == error_1)
+//				{
+//					RTT::log(RTT::Warning) << "Payload is the nearest to " << 1 << RTT::endlog();
+//				}
+//				else
+//				{
+//					RTT::log(RTT::Warning) << "Payload is the nearest to " << 2 << RTT::endlog();
+//				}
+//			}
+//		}
+//
+//
+//
 
 
 
@@ -805,8 +850,18 @@ protected:
 
 
 	// ELM Learner
-	ExtremeLearningMachinePtr elm;
+
+	// Several ELM initialized to consider different payload at the end effector
+
+	ExtremeLearningMachinePtr elm_0;
+	ExtremeLearningMachinePtr elm_1;
+	ExtremeLearningMachinePtr elm_5;
+
 	std::vector<double> torque_difference;
+	std::vector<double> torque_difference_0;
+	std::vector<double> torque_difference_1;
+	std::vector<double> torque_difference_5;
+
 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
 	std::vector< std::vector<double> > inter_torque_elm;
 
