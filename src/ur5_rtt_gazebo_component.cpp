@@ -48,7 +48,7 @@ public:
 
 	UR5RttGazeboComponent(std::string const& name) :
 	/*	RTT::TaskContext(name), nb_static_joints(0) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) , jnt_effort(0),  torque_difference(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 1000 }) , Ki({0.4 , 0.4 , 0.4 , 0.2 , 0.2 , 0.4 }) , Kd({41850 ,41850 , 41850 , 41850 , 41850 , 37850}) , Ks({0,0,0,0,0,0}) */// HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
-			RTT::TaskContext(name), nb_static_joints(0),nearest_mass(0) ,wait(false),temp_wait(false), nb_wait(0), nb_measure_trq(20), wait_step(900), mean_trq_step(300), elm_step(300), ee_mass({5, 0.00001 , 1 , 3 , 4 , 2}) , mass_id(0) , elm_id(0) , random_pos(true) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,add_trq(0), inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,thresholds({{0} , {0} , {0} , {0} }) ,nb_recording(0), jnt_effort(0),  torque_difference(0) , torque_difference_0(0) , torque_difference_1(0), torque_difference_3(0), torque_difference_5(0), payload_index({0.00001 , 1 , 3 , 5}), payload_error(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
+			RTT::TaskContext(name), nb_static_joints(0),nearest_mass(0) ,wait(false),temp_wait(false), nb_wait(0), nb_measure_trq(20), wait_step(600), mean_trq_step(200), elm_step(200), ee_mass({5, 0.00001 , 1 , 3 , 4 , 2}) , mass_id(0) , elm_id(0) , random_pos(true) , jnt_it(0) , jnt_width(0) , nb_links(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}) ,add_trq(0), inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) ,thresholds({{0} , {0} , {0} , {0} }) ,nb_recording(0), jnt_effort(0),  torque_difference(0) , torque_difference_0(0) , torque_difference_1(0), torque_difference_3(0), torque_difference_5(0), payload_index({0.00001 , 1 , 3 , 5}), payload_error(0), control_value(0) , target_value(0), error_value(0),errorI(0), cumulative_error(0), error_derivative(0), last_error(0), dynStepSize(5) , pid_it(5) ,Kp({2000 , 3000  , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850}) , Ks({0,0,0,0,0,0}) // HACK: The urdf has static tag for base_link, which makes it appear in gazebo as a joint.
 			 {
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure",
@@ -285,9 +285,9 @@ public:
 		thresholds[3][4] = 1.5;//29;//29; // For mass 5.
 		thresholds[3][5] = 1;//40;// 40;
 
-		add_trq[0] = 0.02;
-		add_trq[1] = 0.02;
-		add_trq[2] = 0.02;
+		add_trq[0] = 0.01;
+		add_trq[1] = 0.008;
+		add_trq[2] = 0.008;
 		add_trq[3] = 0.01;
 		add_trq[4] = 0.01;
 		add_trq[5] = 0.01;
@@ -313,12 +313,12 @@ public:
 		nb_wait = wait_step;
 
 		// To test guessing of the payload.
-		eeMass(5, model);
+		eeMass(0.0001, model);
 
 		//eeMass(0.00001 , model);
 		mass_id = 4; //  For data recording.
 
-		nearest_mass = 5;
+		nearest_mass = 0;
 
 		RTT::log(RTT::Warning) << "Configure hook finished." << RTT::endlog();
 
