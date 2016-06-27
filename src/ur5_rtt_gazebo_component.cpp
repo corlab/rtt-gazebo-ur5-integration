@@ -285,12 +285,12 @@ public:
 		thresholds[3][4] = 1.5;//29;//29; // For mass 5.
 		thresholds[3][5] = 1;//40;// 40;
 
-		add_trq[0] = 0.01;
-		add_trq[1] = 0.008;
-		add_trq[2] = 0.008;
-		add_trq[3] = 0.01;
-		add_trq[4] = 0.01;
-		add_trq[5] = 0.01;
+		add_trq[0] = 0.01/4.0;
+		add_trq[1] = 0.008/4.0;
+		add_trq[2] = 0.008/4.0;
+		add_trq[3] = 0.01/4.0;
+		add_trq[4] = 0.01/4.0;
+		add_trq[5] = 0.01/4.0;
 
 
 		jnt_effort[0] = 150;
@@ -646,8 +646,8 @@ public:
 
 			if ((sim_id >= 10000)&&(sim_id%elm_step == 0))
 			{
-				if (!wait)
-				{
+			//	if (!wait)
+			//	{
 					double curr_threshold;
 					if (nearest_mass == 0)
 					{
@@ -665,8 +665,9 @@ public:
 					{
 						curr_threshold = thresholds[3][j];
 					}
+					RTT::log(RTT::Warning) << "Joint " << j << "velocity " << model->GetJoints()[joints_idx[j]]->GetVelocity(0) << RTT::endlog();
 
-					if (abs(torque_difference[j]) > curr_threshold)
+					if ((abs(torque_difference[j]) > curr_threshold)&&(abs(model->GetJoints()[joints_idx[j]]->GetVelocity(0))< 0.04))
 					{
 					//	gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
 					//	gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
@@ -682,17 +683,17 @@ public:
 						// Test: the new target value: we add an angle: has to be set for each joint>
 						if (torque_difference[j] > 0)
 						{
-							target_value[j] = target_value[j] + add_trq[j];
+							target_value[j] = target_value[j] + add_trq[j]*abs(torque_difference[j]);
 						}
 						else
 						{
-							target_value[j] = target_value[j] - add_trq[j];
+							target_value[j] = target_value[j] - add_trq[j]*abs(torque_difference[j]);
 						}
 						error_file << "joint " << j << "modified!";
 						temp_wait = true;
 						RTT::log(RTT::Warning) << "Joint " << j << "set to " << target_value[j] << RTT::endlog();
 					}
-				}
+			//	}
 
 
 
