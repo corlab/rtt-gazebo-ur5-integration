@@ -19,7 +19,7 @@
 #include "RealVector.h"
 #include "ExtremeLearningMachine.h"
 
-ELMComponent::ELMComponent(std::string const& name) : RTT::TaskContext(name),curr_mass(1) , elm_id(0) ,comp_wait(10000), nb_joints(6) ,currVelocity_Flow(RTT::NoData), meanJntTrq_Flow(RTT::NoData),  currJntPos_Flow(RTT::NoData) {	// TODO Auto-generated constructor stub
+ELMComponent::ELMComponent(std::string const& name) : RTT::TaskContext(name),curr_mass(1) , thresholds({{0} , {0} , {0} , {0} }) ,elm_id(0) ,comp_wait(10000), nb_joints(6) ,currVelocity_Flow(RTT::NoData), meanJntTrq_Flow(RTT::NoData),  currJntPos_Flow(RTT::NoData) {	// TODO Auto-generated constructor stub
 
 
 
@@ -56,7 +56,6 @@ bool ELMComponent::configureHook() {
 
 	for (unsigned j = 0; j < nb_joints; j++)
 		{
-			torque_difference.push_back(0);
 			torque_difference.push_back(0);
 			add_trq.push_back(0);
 			thresholds[0].push_back(0);
@@ -106,9 +105,6 @@ bool ELMComponent::configureHook() {
 	add_trq[3] = 0.01/4.0;
 	add_trq[4] = 0.01/4.0;
 	add_trq[5] = 0.01/4.0;
-
-
-	RTT::log(RTT::Error) << "ELM 1 done." << RTT::endlog();
 
 
 		// ELM model creation.
