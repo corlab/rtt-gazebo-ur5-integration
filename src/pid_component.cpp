@@ -31,7 +31,6 @@
 
 
 PIDController::PIDController(std::string const& name) : RTT::TaskContext(name), jnt_effort(0) , nb_joints(0) , dynStepSize(1) , refJntPos_Flow(RTT::NoData) , currJntPos_Flow(RTT::NoData) , targetPosition(0), error_value(0), cumulative_error(0), last_error(0),  Kp({2000 , 3000 , 3000 , 540 , 540 , 70 }) , Ki({0.4 , 0.4 , 0.4 , 0.0 , 0.0 , 0.4 }) , Kd({41850 ,41850 , 11850 , 41850 , 51850 , 2850})  {
-
 	this->addPort("cmdJntTrq", cmdJntTrq_Port);
     trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
     cmdJntTrq_Port.setDataSample(trqCmdOutput);
@@ -148,7 +147,6 @@ void PIDController::updateHook() {
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }
-		RTT::log(RTT::Error) << "P: Trqcmnd: " << trqCmdOutput[1] << RTT::endlog();
 
 
 	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
