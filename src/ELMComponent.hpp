@@ -36,9 +36,11 @@ public:
 	 RTT::InputPort<std::vector<double>> currJntPos_Port; // Target value.
 	 RTT::FlowStatus currJntPos_Flow;
 
-	 RTT::InputPort<std::vector<double>> currJntTrq_Port;
-	 RTT::FlowStatus currJntTrq_Flow;
-	 std::vector<double> currTrq;
+	 RTT::InputPort<std::vector<double>> meanJntTrq_Port; // Target value.
+	 RTT::FlowStatus meanJntTrq_Flow;
+
+	 RTT::InputPort<std::vector<double>> currVelocity_Port; // Target value.
+	 RTT::FlowStatus currVelocity_Flow;
 
 	 // ELM Learner
 	 ExtremeLearningMachinePtr elm;
@@ -47,9 +49,46 @@ public:
 	 std::ofstream error_file;
 
 	 // Compliancy
-	 std::vector<double> thresholds;
 	 std::vector<double> currPos;
 	 std::vector<double> dsrPos;
+	 std::vector<double> meanTrq;
+	 std::vector<double> currVelo;
+
+
+	 // ELM Learner
+
+	 	// Several ELM initialized to consider different payload at the end effector
+
+	 	ExtremeLearningMachinePtr elm_0;
+	 	ExtremeLearningMachinePtr elm_1;
+	 	ExtremeLearningMachinePtr elm_3;
+	 	ExtremeLearningMachinePtr elm_5;
+
+	 	std::vector<double> payload_error; // To compare the differences between current torque and awaited torque or different payloads.
+	 	std::vector<double> payload_index; // contains payloads in correct order to find current payload.
+
+
+	 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
+	 	std::vector< std::vector<double> > inter_torque_elm;
+
+	 	// Compliance
+	 	std::vector< std::vector<double> > thresholds;
+	 	std::vector<double> jnt_effort;
+	 	std::vector<double> add_trq; // Torque which is added when difference overshoots the threshold.
+	 	bool wait;
+	 	bool temp_wait; // Used because all joints must be updated before waiting.
+	 	int nb_wait;
+	 	int wait_step;
+	 	int elm_step;
+	 	int mean_trq_step;
+	 	int comp_wait;
+		int elm_id;
+
+		double curr_mass;
+		RTT::InputPort<double> currMass_Port; // Target value.
+		RTT::FlowStatus currMass_Flow;
+
+
 
 
 };

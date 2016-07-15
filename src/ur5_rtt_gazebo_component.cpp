@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0) , inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(5) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0),nb_links(0) ,elm_id(0), compPos_Flow(RTT::NoData), inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) , curr_mass(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(5) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
@@ -63,12 +63,12 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
+
 		// Get the joints
 		gazebo_joints_ = model->GetJoints();
 		model_links_ = model->GetLinks(); // Only working when starting gzserver and gzclient separately!
 
-		RTT::log(RTT::Warning) << "Model has " << gazebo_joints_.size()
-				<< " joints" << RTT::endlog();
+		RTT::log(RTT::Warning) << "Model has " << gazebo_joints_.size() << " joints" << RTT::endlog();
 
 		//NOTE: Get the joint names and store their indices
 		// Because we have base_joint (fixed), j0...j6, ati_joint (fixed)
@@ -100,6 +100,36 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			return false;
 		}
 
+
+		idx = 0;
+		for (gazebo::physics::Link_V::iterator lit = model_links_.begin();
+				lit != model_links_.end(); ++lit, ++idx) {
+
+			const std::string name = (*lit)->GetName();
+			links_idx.push_back(idx);
+			link_names_.push_back(name);
+			RTT::log(RTT::Warning) << "Adding link [" << name << "] idx:"
+					<< idx << RTT::endlog();
+			nb_links++;
+		}
+
+
+
+		if (links_idx.size() == 0) {
+			RTT::log(RTT::Error) << "No links could be added, exiting"
+					<< RTT::endlog();
+			return false;
+		}
+
+		curr_mass = 1;
+			RTT::log(RTT::Error) << "Beginning mass model" << RTT::endlog();
+
+					// To test guessing of the payload.
+			eeMass(curr_mass, model);
+
+			RTT::log(RTT::Error) << "Mass model set" << RTT::endlog();
+
+
 		RTT::log(RTT::Warning) << "Gazebo model found " << joints_idx.size()
 				<< " joints " << RTT::endlog();
 		RTT::log(RTT::Warning) << "Done configuring gazebo" << RTT::endlog();
@@ -108,6 +138,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		{
 			gazebo_joints_[joints_idx[j]]->SetProvideFeedback(true);
 			currPosition.push_back(j);
+			meanTrq.push_back(0);
+			currVelo.push_back(0);
 		}
 
 		/*
@@ -120,6 +152,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		this->addPort("cmdJntTrq", cmdJntTrq_Port);
 		trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
 		this->addPort("trgtPos", trgtPos_Port);
+		this->addPort("compPos" , compPos_Port);
 
 		this->addPort("currJntPos", currJntPos_Port);
 		currJntPos_Port.setDataSample(trqCmdOutput);
@@ -127,6 +160,13 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		refJntPos_Port.setDataSample(trqCmdOutput);
 		this->addPort("currJntTrq", currJntTrq_Port);
 		currJntTrq_Port.setDataSample(trqCmdOutput);
+		this->addPort("meanJntTrq", meanJntTrq_Port);
+		meanJntTrq_Port.setDataSample(trqCmdOutput);
+		this->addPort("currVelo" , currVelocity_Port);
+		currVelocity_Port.setDataSample(trqCmdOutput);
+
+		this->addPort("currMass" , currMass_Port);
+		currMass_Port.setDataSample(0);
 
 		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
 
@@ -152,20 +192,75 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
 		if (trgtPos_Port.connected())
 			trgtPos_Flow = trgtPos_Port.read(targetPosition);
-
+		if (compPos_Port.connected())
+			compPos_Flow = compPos_Port.read(targetPosition);
 		//	RTT::log(RTT::Warning) << "G: Torque command read." << RTT::endlog();
 
 
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
 				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]);
-				//RTT::log(RTT::Warning) << "Trqcmnd " << j << ": "<< trqCmdOutput[j] ;
 			}
 
 
 			sim_id ++;
 
 		nb_iteration++;
+
+
+
+
+			if ((elm_id == (10)) ||(elm_id == (20)) ||(elm_id == (30)) ||(elm_id == (40)) ||(elm_id == (50)) ||(elm_id == (60)) ||(elm_id == (70)) ||(elm_id == (80)) ||(elm_id == (90)) || (elm_id == (100)) || (elm_id == (110)) || (elm_id == (120)) || (elm_id == (130)) || (elm_id == (140)) || (elm_id == (150)) || (sim_id == (160)) || (elm_id == (170)) || (elm_id == (180)) || (elm_id == (190)) || (elm_id == 200) ) // To check if position is stable.
+			{
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
+					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
+					inter_torque_elm[j].push_back(a1.Dot(w1.body1Torque));
+				}
+			}
+
+
+
+
+			/***************************************************************************************************************************************************/
+
+
+
+			/***************************************************************************************************************************************************/
+			/*
+			 * Compliance of the robot.
+			 */
+
+			if (elm_id == 200)
+			{
+				elm_id = 0;
+
+
+						// ********************************************************************************************************************************
+						// * ELM part:
+						// * Computing the difference between current torque and awaited torque for each joint.
+						// Create vector containing awaited position.
+
+				for (unsigned j = 0; j < joints_idx.size(); j++)
+				{
+					double mean_of_torques_elm = 0;
+					mean_of_torques_elm = (std::accumulate((inter_torque_elm[j]).begin(),(inter_torque_elm[j]).end(), 0.0))/20;
+					meanTrq[j] = mean_of_torques_elm;
+					inter_torque_elm[j] = {0};
+					mean_of_torques_elm = 0;
+					currVelo[j] = model->GetJoints()[joints_idx[j]]->GetVelocity(0);
+				}
+				if (meanJntTrq_Port.connected())
+				{
+					meanJntTrq_Port.write(meanTrq);
+				}
+				if (currVelocity_Port.connected())
+				{
+					currVelocity_Port.write(currVelo);
+				}
+			}
+
 
 
 		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
@@ -181,101 +276,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 		if (nb_iteration >= 3000) // For stabilisation of the torque.
 		{
-			// Data recording.
-			/*
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				data_file << "{ sim_id = " << sim_id << " ; ";
-
-				for (unsigned j = 0; j < joints_idx.size(); j++)
-				{
-					data_file << "jnt " << j << " ; ";
-					gazebo::physics::JointWrench w1 = gazebo_joints_[joints_idx[j]]->GetForceTorque(0u);
-					gazebo::math::Vector3 a1 = gazebo_joints_[joints_idx[j]]->GetLocalAxis(0u);
-					data_file << "trq "<< *std::min_element((inter_torque[j]).begin(),(inter_torque[j]).end()) << " ; "; // See torque computation !!
-					data_file << "agl "	<< model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian() << " ; ";
-					data_file << "trg_agl "	<<targetPosition[j] << " ; ";
-				}
-
-				for (unsigned j = 0; j < joints_idx.size(); j++)
-				{
-					data_file << "ctrl "	<< trqCmdOutput[j] << " ; ";
-				}
-				data_file << " }" << std::endl;
-			}
-		//	RTT::log(RTT::Warning) << "G: Data recorded." << RTT::endlog();
-		*/
-
 			nb_iteration = 0;
-
-			// Changes desired position  of each joint.
-/*
-			// To make the target values of the joints change.
-			if (targetPosition[5] < 3.14)
-			{
-				targetPosition[5] = targetPosition[5] + 1.17;
-			}
-			else
-			{
-				if (targetPosition[4] < 1.57)
-				{
-					targetPosition[4] = targetPosition[4] + 0.7;
-				}
-				else
-				{
-					if ( (targetPosition[3] <(0.7)))
-					{
-						targetPosition[3] = targetPosition[3] + 0.9;
-					}
-					else
-					{
-						if (targetPosition[1] < 1.57 && targetPosition[2] > (3.14 - (+targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 3.14 + 0.8))
-						{
-							targetPosition[2] = targetPosition[2] - 0.3;
-						}
-						else if (targetPosition[1] > 1.57 && targetPosition[2] > (-3.14 + (- targetPosition[1] + 1.7 - acos(cos(-targetPosition[1]+1.7)*l1/l2))+3.14 - 0.8))
-						{
-							targetPosition[2] = targetPosition[2] + 0.3;
-						}
-						else
-						{
-							if (targetPosition[1] > -2.3)
-							{
-								targetPosition[1] = targetPosition[1] - 0.4;
-							}
-							else
-							{
-								targetPosition[1] = -0.1;
-
-
-								if (targetPosition[0] >= 6.28)
-								{
-									targetPosition[0] = 0;
-								}
-								else
-								{
-									targetPosition[0] = targetPosition[0] + 1.5;
-								}
-
-							}
-									if (targetPosition[1] < 1.57)
-							{
-								targetPosition[2] = 3.14 - (+ targetPosition[1] + acos(sin(-targetPosition[1])*l1/l2) + 1.57) - 0.3 -0.4;
-							}
-							else
-							{
-								targetPosition[2] = -3.14 + (- targetPosition[1] + 1.7 - acos(cos(-targetPosition[1]+1.7)*l1/l2)) + 0.3 +0.4;
-							}
-						}
-						targetPosition[3] = -3.14;
-					}
-					targetPosition[4] = -1.4;
-				}
-				targetPosition[5] = -1.57;
-			}
-*/
-
-
 		}
 
 
@@ -322,6 +323,30 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 	void UR5RttGazeboComponent::cleanupHook() {
 		return ;
+	}
+
+	void UR5RttGazeboComponent::eeMass(double mass , gazebo::physics::ModelPtr model)
+	{
+			// Code to change mass and inertia tensor at the end effector during the simulation. // Here mass set to 1 for data recording.
+			RTT::log(RTT::Error) << "Model modification." << RTT::endlog();
+			auto inertial = model->GetLinks()[links_idx[nb_links-1]]->GetInertial();
+			RTT::log(RTT::Error) << "Inertia pointer prepared." << RTT::endlog();
+			inertial->SetMass(mass);
+			double inertia_value;
+			inertia_value = (mass*0.05*0.05)/6;
+			RTT::log(RTT::Error) << "Mass set to " << mass << RTT::endlog();
+			inertial->SetInertiaMatrix(inertia_value, inertia_value, inertia_value, 0, 0, 0);
+			RTT::log(RTT::Error) << "Inertia matrix prepared." << RTT::endlog();
+			model_links_[links_idx[nb_links-1]]->SetInertial(inertial);
+			RTT::log(RTT::Error) << "Inertia matrix set." << RTT::endlog();
+			model_links_[links_idx[nb_links-1]]->UpdateMass();
+			RTT::log(RTT::Error) << "Inertia set to model. " << RTT::endlog();
+			curr_mass = mass;
+			if (currMass_Port.connected()) {
+				currMass_Port.write(mass);
+			}
+			RTT::log(RTT::Error) << "end model modification" << RTT::endlog();
+
 	}
 
 ORO_LIST_COMPONENT_TYPE(UR5RttGazeboComponent)

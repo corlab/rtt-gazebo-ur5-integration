@@ -38,7 +38,7 @@ public:
     void updateHook();
     void stopHook();
     void cleanupHook();
-
+    void eeMass(double mass , gazebo::physics::ModelPtr model);
 
 
     RTT::InputPort<std::vector<double>> cmdJntTrq_Port;
@@ -47,14 +47,21 @@ public:
     RTT::InputPort<std::vector<double>> trgtPos_Port;
     RTT::FlowStatus trgtPos_Flow;
 
+    RTT::InputPort<std::vector<double>> compPos_Port;
+    RTT::FlowStatus compPos_Flow;
+
     RTT::OutputPort<std::vector<double>> currJntPos_Port;
     RTT::OutputPort<std::vector<double>> refJntPos_Port;
     RTT::OutputPort<std::vector<double>> currJntTrq_Port;
-
+    RTT::OutputPort<std::vector<double>> meanJntTrq_Port;
+    RTT::OutputPort<std::vector<double>> currVelocity_Port;
+    RTT::OutputPort<double> currMass_Port;
 
     std::vector<double> trqCmdOutput;
     std::vector<double> currPosition;
     std::vector<double> targetPosition;
+    std::vector<double> meanTrq;
+    std::vector<double> currVelo;
 
 
 	std::ofstream data_file;
@@ -63,10 +70,11 @@ public:
 	int sim_id; // number of angle positions tested.
 
 	std::vector<int> joints_idx;
-
+	std::vector<int> links_idx;
 	std::vector<gazebo::physics::JointPtr> gazebo_joints_;
 	gazebo::physics::Link_V model_links_;
 	std::vector<std::string> joint_names_;
+	std::vector<std::string> link_names_;
 
 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
 	std::vector< std::vector<double> > inter_torque;
@@ -75,11 +83,13 @@ public:
 	double PIDStepSize;
 
 	int nb_static_joints;
-
+	int nb_links;
 	double l1; // length of link1
 	double l2;  // length of link2
 
-
-
+	double curr_mass;
+	// Variable to save intermediate robot position - to decide if the data will be written in the file.
+	std::vector< std::vector<double> > inter_torque_elm;
+	int elm_id;
 };
 #endif
