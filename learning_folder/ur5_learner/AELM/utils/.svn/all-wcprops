@@ -1,0 +1,365 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/psm/!svn/ver/183/matlab/utils
+END
+func_FromPolarCoords2CartesianCoords.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/psm/!svn/ver/1/matlab/utils/func_FromPolarCoords2CartesianCoords.m
+END
+draw_circle.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/psm/!svn/ver/1/matlab/utils/draw_circle.m
+END
+drawtraj.m
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/psm/!svn/ver/151/matlab/utils/drawtraj.m
+END
+dcm2angles.m
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/psm/!svn/ver/2/matlab/utils/dcm2angles.m
+END
+cor2lor.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/122/matlab/utils/cor2lor.m
+END
+lor2cor.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/122/matlab/utils/lor2cor.m
+END
+softmax_sample.m
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/psm/!svn/ver/183/matlab/utils/softmax_sample.m
+END
+plotNDOFArm.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/psm/!svn/ver/1/matlab/utils/plotNDOFArm.m
+END
+blendLASA.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/psm/!svn/ver/122/matlab/utils/blendLASA.m
+END
+knn.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/psm/!svn/ver/118/matlab/utils/knn.m
+END
+morphLASA.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/psm/!svn/ver/122/matlab/utils/morphLASA.m
+END
+clip.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/psm/!svn/ver/1/matlab/utils/clip.m
+END
+plotCircle3D.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/1/matlab/utils/plotCircle3D.m
+END
+print_img.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/2/matlab/utils/print_img.m
+END
+func_FromAngularCoords2CartesianCoords.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/psm/!svn/ver/1/matlab/utils/func_FromAngularCoords2CartesianCoords.m
+END
+func_FromCartesianCoords2AngularCoords.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/psm/!svn/ver/1/matlab/utils/func_FromCartesianCoords2AngularCoords.m
+END
+arrow.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/psm/!svn/ver/1/matlab/utils/arrow.m
+END
+func_MakeGridFromSeq.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/psm/!svn/ver/1/matlab/utils/func_MakeGridFromSeq.m
+END
+func_MakeSeqFromGrid.m
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/psm/!svn/ver/1/matlab/utils/func_MakeSeqFromGrid.m
+END
+tr2cr.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/122/matlab/utils/tr2cr.m
+END
+time2space.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/118/matlab/utils/time2space.m
+END
+space2time.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/118/matlab/utils/space2time.m
+END
+func_wrapperfwdkin.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/psm/!svn/ver/1/matlab/utils/func_wrapperfwdkin.m
+END
+normalize.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/2/matlab/utils/normalize.m
+END
+blendTrajectories.m
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/psm/!svn/ver/122/matlab/utils/blendTrajectories.m
+END
+smaxFct.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/2/matlab/utils/smaxFct.m
+END
+deg2rad.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/2/matlab/utils/deg2rad.m
+END
+rad2deg.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/2/matlab/utils/rad2deg.m
+END
+ctrlgui.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/psm/!svn/ver/15/matlab/utils/ctrlgui.m
+END
+createGrid.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/118/matlab/utils/createGrid.m
+END
+normalizeDiscreteMotion.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/psm/!svn/ver/183/matlab/utils/normalizeDiscreteMotion.m
+END
+norm2range.m
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/psm/!svn/ver/2/matlab/utils/norm2range.m
+END
+axis2dcm.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/psm/!svn/ver/7/matlab/utils/axis2dcm.m
+END
+dcm2axis.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/psm/!svn/ver/2/matlab/utils/dcm2axis.m
+END
+normalizeTrajectory0to1.m
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/psm/!svn/ver/122/matlab/utils/normalizeTrajectory0to1.m
+END
+func_AddRadius.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/psm/!svn/ver/1/matlab/utils/func_AddRadius.m
+END
+softmaxPmtk.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/psm/!svn/ver/183/matlab/utils/softmaxPmtk.m
+END
+subaxis.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/1/matlab/utils/subaxis.m
+END
+morphTrajectory2.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/psm/!svn/ver/183/matlab/utils/morphTrajectory2.m
+END
+euler2dcm.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/2/matlab/utils/euler2dcm.m
+END
+dcm2euler.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/2/matlab/utils/dcm2euler.m
+END
+xmlreadstring.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/psm/!svn/ver/1/matlab/utils/xmlreadstring.m
+END
+print_pdf.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/psm/!svn/ver/2/matlab/utils/print_pdf.m
+END
+randInRange.m
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/psm/!svn/ver/122/matlab/utils/randInRange.m
+END
+func_OmitRadius.m
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/psm/!svn/ver/1/matlab/utils/func_OmitRadius.m
+END
+plotArmLink.m
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/psm/!svn/ver/1/matlab/utils/plotArmLink.m
+END
+cr2tr.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/122/matlab/utils/cr2tr.m
+END
+morphTrajectory.m
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/psm/!svn/ver/122/matlab/utils/morphTrajectory.m
+END
+rotateLASA.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/122/matlab/utils/rotateLASA.m
+END
+func_FromSpericalCoords2CartesianCoords.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/psm/!svn/ver/1/matlab/utils/func_FromSpericalCoords2CartesianCoords.m
+END
+func_FromCartesianCoords2SpericalCoords.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/psm/!svn/ver/1/matlab/utils/func_FromCartesianCoords2SpericalCoords.m
+END
+plotMotionMap.m
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/psm/!svn/ver/118/matlab/utils/plotMotionMap.m
+END
+fkineNDOFArm.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/1/matlab/utils/fkineNDOFArm.m
+END
+rmse.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/psm/!svn/ver/183/matlab/utils/rmse.m
+END
+func_TransposeArgs.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/psm/!svn/ver/1/matlab/utils/func_TransposeArgs.m
+END
+normalizeTrajectory.m
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/psm/!svn/ver/122/matlab/utils/normalizeTrajectory.m
+END
+morphLASA2.m
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/psm/!svn/ver/183/matlab/utils/morphLASA2.m
+END
+resample.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/psm/!svn/ver/2/matlab/utils/resample.m
+END
+randu.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/psm/!svn/ver/1/matlab/utils/randu.m
+END
+range2norm.m
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/psm/!svn/ver/2/matlab/utils/range2norm.m
+END

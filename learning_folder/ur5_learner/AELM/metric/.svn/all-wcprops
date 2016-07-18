@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/psm/!svn/ver/2/matlab/metric
+END
+Metric.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/psm/!svn/ver/2/matlab/metric/Metric.m
+END
+mexSqEucDistance.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/psm/!svn/ver/2/matlab/metric/mexSqEucDistance.cpp
+END
+mexWeightedSqEucDistance.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/psm/!svn/ver/2/matlab/metric/mexWeightedSqEucDistance.cpp
+END

@@ -1,0 +1,120 @@
+
+close all;
+clear all;
+
+interactiveTesting = 1;
+
+%% example data
+noise = 0.03;
+numSamples = 100;
+X = linspace(-1, 1, numSamples)';
+Y = 4 * X + 0.5;
+Y = 1./(1+exp(-Y));
+Y = normalize(Y);
+Y = Y + noise * randn(numSamples, 1);
+X = [X Y];
+
+if 1
+%% a 1d manifold with branch
+noise = 0.03;
+%linear part
+x = [-2:0.01:0]';
+y = x;
+%first branch
+x1 = [0:0.01:3]';
+y1 = sqrt(x1);
+%second branch
+x2 = [0:0.01:2]';
+y2 = -sqrt(x2);
+%collect all parts
+X = [x; x1; x2];
+Y = [y; y1; y2];
+%normalize
+X = normalize(X);
+Y = normalize(Y);
+%add noise
+Y = Y + noise * randn(size(Y));
+X = [X Y];
+end
+
+%% learner
+modDims = [1 1];
+lspecs = {'class', 'OSAELM'; 'hidDim', 100; 'g', [1/2 1/2]; 'regInp', -1; 'regOut', 1e-2; 'conv', 1; 'sp', [0.2 10 5]};
+
+cmd = ['l = ' lspecs{1,2} '(modDims, lspecs);'];
+eval(cmd);
+
+l.init();
+
+%%%%%%%%%%%%%%%%%% interactive testing %%%%%%%%%%%%%%%%%%%%%%%
+G = createGrid(2, [-1.2; -1.2], [1.2; 1.2], 15 * ones(2,1));
+x = X(1,1);
+y = X(1,2);
+xy = [x y];
+l.setDrivenMods([1 2]);
+
+close all;
+h = figure;
+a = axes();
+%{
+bcpanel = uipanel('Title', 'b, c1, c2',...
+                'Parent',h,'Units','normalized',...
+                'Position', [0 0.7 0.3 0.3],...
+                'FontSize', 12, 'BackgroundColor', 'white');
+bcctrl = ctrlgui(3, [0 10; 0 10; 0 10], bcpanel);
+bcctrl.setValues([l.b l.c]);
+%}
+rotate3d on;
+set(gcf, 'SelectionType', 'open');
+stop = 0;
+alt = 0;
+while ~stop
+    point = get(gca, 'CurrentPoint');
+    button = get(gcf,'SelectionType');
+    target = [point(1,1) point(1,2)];
+    
+    if strcmp(button, 'alt')
+        x = target(1);
+        y = target(2);
+        if target(1) < -1.2
+            stop = 1;
+        end
+    elseif strcmp(get(rotate3d(h),'Enable'), 'on')
+        x = target(1);
+    end
+    set(gcf, 'SelectionType', 'open');
+
+    %clf(h);
+    %axes(a);
+    delete(get(a,'children'));
+    hold on; box on; grid on;
+    daspect([1 1 1]);
+    axis([-1.2 1.2 -1.2 1.2]);
+    
+    plot(X(:,1), X(:,2), '.k');
+    plot(x, y, '*m');
+    plot(target(1), target(2), '*r');
+    
+    r = randi(size(X,1));
+    l.train(X(r,:), X(r,:));
+    
+    %l.b = bcctrl.values(1);
+    %l.c = bcctrl.values(2:3)';
+    
+    [xyhat] = l.apply([x y]);
+    x = xyhat(1);
+    y = xyhat(2);
+    
+    Ghat = l.apply(G);
+    arrow(G, Ghat, 'Length', 5);
+    
+    drawnow;
+end
+
+close(h);
+
+
+
+
+
+
