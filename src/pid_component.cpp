@@ -99,7 +99,7 @@ bool PIDController::configureHook() {
 
 void PIDController::updateHook() {
 
-		RTT::log(RTT::Error) << "Beginning PIDController update." << RTT::endlog();
+//		RTT::log(RTT::Error) << "Beginning PIDController update." << RTT::endlog();
 
 		refJntPos_Flow = refJntPos_Port.read(targetPosition);
 	//	RTT::log(RTT::Error) << "P: Target position read." << RTT::endlog();
@@ -114,42 +114,24 @@ void PIDController::updateHook() {
 
 	    if (currJntPos_Flow == RTT::NewData || refJntPos_Flow == RTT::NewData)
 	    {
-	    	RTT::log(RTT::Error) << "P: New position received." << RTT::endlog();
-
 	    	// Command computation.
 	    	for (unsigned j = 0; j < nb_joints; j++)
 	    	{
 				error_value[j] = targetPosition[j] -  currPosition[j];
-				//RTT::log(RTT::Error) << "Joint " << j << " error computed. "<< RTT::endlog();
-
 				trqCmdOutput[j] = error_value[j]*Kp[j];
-				//RTT::log(RTT::Error) << "Joint " << j << " Kp computed. "<< RTT::endlog();
-
 				cumulative_error[j] = cumulative_error[j] + error_value[j];
-				//RTT::log(RTT::Error) << "Joint " << j << " cumulative error computed. "<< RTT::endlog();
-
 				trqCmdOutput[j] = trqCmdOutput[j] + cumulative_error[j]*Ki[j]*dynStepSize;
-
-				//RTT::log(RTT::Error) << "Joint " << j << " ki computed. "<< RTT::endlog();
-
 				trqCmdOutput[j] = constrainCommand(jnt_effort[j] , -jnt_effort[j] ,  trqCmdOutput[j] + (error_value[j]-last_error[j])*(Kd[j]/dynStepSize));
-
-				//RTT::log(RTT::Error) << "Joint " << j << " torque command computed. "<< RTT::endlog();
-
 				last_error[j] = error_value[j];
-				//RTT::log(RTT::Error) << "Joint " << j << " last error computed. "<< RTT::endlog();
-
 	    	}
 	    }
-		//RTT::log(RTT::Error) << "P: Torque command computed." << RTT::endlog();
-
 
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }
 
 
-	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
+//	RTT::log(RTT::Error) << "PIDController updated." << RTT::endlog();
 
 }
 

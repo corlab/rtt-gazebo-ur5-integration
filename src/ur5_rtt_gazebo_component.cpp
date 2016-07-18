@@ -150,7 +150,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 
 		this->addPort("cmdJntTrq", cmdJntTrq_Port);
-		trqCmdOutput = {0 , 0 ,0 ,0 ,0 , 0};
+		trqCmdOutput = {0.0 , 0.0 ,0.0 ,0.0 ,0.0 , 0.0};
 		this->addPort("trgtPos", trgtPos_Port);
 		this->addPort("compPos" , compPos_Port);
 
@@ -182,7 +182,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 
 	//! Called from Gazebo
 	void UR5RttGazeboComponent::gazeboUpdateHook(gazebo::physics::ModelPtr model) {
-		RTT::log(RTT::Warning) << "Beginning GazeboComponent update. " << RTT::endlog();
+//		RTT::log(RTT::Warning) << "Beginning GazeboComponent update. " << RTT::endlog();
 		if (model.get() == NULL) {
 			return;
 		}
@@ -194,8 +194,6 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			trgtPos_Flow = trgtPos_Port.read(targetPosition);
 		if (compPos_Port.connected())
 			compPos_Flow = compPos_Port.read(targetPosition);
-		//	RTT::log(RTT::Warning) << "G: Torque command read." << RTT::endlog();
-
 
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -206,7 +204,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			sim_id ++;
 
 		nb_iteration++;
-
+		elm_id ++;
 
 
 
@@ -254,6 +252,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				if (meanJntTrq_Port.connected())
 				{
 					meanJntTrq_Port.write(meanTrq);
+					RTT::log(RTT::Warning) << "Mean torque sent, elm id: "<<elm_id << RTT::endlog();
+
 				}
 				if (currVelocity_Port.connected())
 				{
@@ -299,7 +299,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
-	RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
+//	RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
 
 	}
 

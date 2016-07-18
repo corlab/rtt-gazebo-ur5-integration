@@ -33,8 +33,8 @@ public:
 
 	 RTT::OutputPort<std::vector<double>> cmdJntPos_Port;
 
-	 RTT::InputPort<std::vector<double>> currJntPos_Port; // Target value.
-	 RTT::FlowStatus currJntPos_Flow;
+	 RTT::InputPort<std::vector<double>> trgtJntPos_Port; // Target value.
+	 RTT::FlowStatus trgtJntPos_Flow;
 
 	 RTT::InputPort<std::vector<double>> meanJntTrq_Port; // Target value.
 	 RTT::FlowStatus meanJntTrq_Flow;
@@ -49,7 +49,7 @@ public:
 	 std::ofstream error_file;
 
 	 // Compliancy
-	 std::vector<double> currPos;
+	 std::vector<double> trgtPos;
 	 std::vector<double> dsrPos;
 	 std::vector<double> meanTrq;
 	 std::vector<double> currVelo;
@@ -83,9 +83,11 @@ public:
 	 	int mean_trq_step;
 	 	int comp_wait;
 		int elm_id;
+		int nb_step;
+		bool new_pos;
 
 		double curr_mass;
-		RTT::InputPort<double> currMass_Port; // Target value.
+		RTT::InputPort<double> currMass_Port;
 		RTT::FlowStatus currMass_Flow;
 
 

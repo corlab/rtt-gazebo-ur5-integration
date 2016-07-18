@@ -42,7 +42,7 @@ connect("ur5_gazebo.refJntPos","pid_component.refJntPos",cp_ctrl_gz);
 
 var ConnPolicy cp_ctrl_ELM;
 connect("elm_component.cmdJntPos","ur5_gazebo.compPos",cp_ctrl_ELM);
-connect("ur5_gazebo.currJntPos","elm_component.currJntPos",cp_ctrl_ELM);
+connect("ur5_gazebo.refJntPos","elm_component.trgtJntPos",cp_ctrl_ELM);
 connect("ur5_gazebo.meanJntTrq","elm_component.meanJntTrq",cp_ctrl_ELM);
 connect("ur5_gazebo.currMass","elm_component.currMass",cp_ctrl_ELM);
 connect("ur5_gazebo.currVelo","elm_component.currVelo",cp_ctrl_ELM);
