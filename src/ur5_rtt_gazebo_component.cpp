@@ -222,7 +222,6 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]);
 		}
 
-
 		sim_id ++;
 
 		nb_iteration++;

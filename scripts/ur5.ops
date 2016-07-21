@@ -61,9 +61,10 @@ pid_component.configure()
 elm_component.configure()
 
 
+// If data collecting mode, switch off elm_component. If compliance mode, switch off DataCollector componenent
 
 ur5_gazebo.start()
 DataCollector.start()
 pid_component.start()
-// elm_component.start()
+//elm_component.start() 
 

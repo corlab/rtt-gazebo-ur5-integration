@@ -13,9 +13,20 @@
 #include <rtt/Property.hpp>
 #include <rtt/Attribute.hpp>
 #include <math.h>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+
 using namespace std;
 
 DataCollector::DataCollector(std::string const& name): RTT::TaskContext(name), sim_id(0), nb_recording(0), jnt_it(0), random_pos(true), nb_joints(6), new_mass(0), currJntPos_Flow(RTT::NoData) , meanCurrJntTrq_Flow(RTT::NoData) , currPos(0) , currTrq(0) {
+
+	l1 = 0.7;//0.42500;//0.7; // find real values later !!
+	l2 = 0.9;//0.39225;//0.9;// find real values later !!
+
 
 	this->addPort("newMass", newMass_Port);
 	new_mass = 0.0;
@@ -35,8 +46,7 @@ bool DataCollector::configureHook(){
 
 	new_mass = 1; // Set the same as the rttgazebo componenent !
 
-	l1 = 0.7;//0.42500;//0.7; // find real values later !!
-	l2 = 0.9;//0.39225;//0.9;// find real values later !!
+
 
 	for (unsigned j = 0; j < nb_joints; j++)
 	{
@@ -46,8 +56,6 @@ bool DataCollector::configureHook(){
 		jnt_it.push_back(1);
 		jnt_width.push_back(0);
 	}
-
-
 
 
 	nb_recording[0] = 4.0;
@@ -77,6 +85,8 @@ bool DataCollector::configureHook(){
 }
 
 void DataCollector::updateHook(){
+//	RTT::log(RTT::Error) << target_value[2] << RTT::endlog();
+
 	sim_id ++;
 	if (currJntPos_Port.connected())
 		currJntPos_Flow = currJntPos_Port.read(currPos);
@@ -102,14 +112,14 @@ void DataCollector::updateHook(){
 
 		// Payload and new positions send
 
-		/*
+
 		new_mass = 5 + ((double)rand() / RAND_MAX)*( 5); // Between 5 and 10 kg.
 		if (newMass_Port.connected())
 		{
 			newMass_Port.write(new_mass);
 			RTT::log(RTT::Error) << "New mass set" << RTT::endlog();
 		}
-		 */
+
 		if ((jnt_it[5]) < nb_recording[5])
 		{
 			jnt_it[5] = jnt_it[5]+1;
@@ -214,12 +224,9 @@ void DataCollector::updateHook(){
 			jnt_it[5] = 1;
 		}
 
-		for (unsigned j = 0; j < 6; j++)
-				{
-			RTT::log(RTT::Error) << "test" << RTT::endlog();
 
-			RTT::log(RTT::Error) << target_value[j] << RTT::endlog();
-				}
+
+
 
 		if (trgtJntPos_Port.connected())
 		{
