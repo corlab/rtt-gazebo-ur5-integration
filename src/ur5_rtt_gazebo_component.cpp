@@ -36,7 +36,7 @@ using namespace std;
 
 
 UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
-			RTT::TaskContext(name), nb_static_joints(0),nb_links(0) ,elm_id(0), compPos_Flow(RTT::NoData), inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) , curr_mass(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(5) // Frequency of PID component
+			RTT::TaskContext(name), nb_static_joints(0),nb_links(0), meanCollTrq(0), newMass_Flow(RTT::NoData), elm_id(0), compPos_Flow(RTT::NoData), inter_torque_elm({{0} , {0} , {0} , {0} , {0} , {0}}) , curr_mass(0), inter_torque({{0} , {0} , {0} , {0} , {0} , {0}}),  trqCmdOutput(0) , targetPosition(0) , currPosition(0) , cmdJntTrq_Flow(RTT::FlowStatus(0)) , trgtPos_Flow(RTT::FlowStatus(0)), PIDStepSize(5) // Frequency of PID component
 	{
 		// Add required gazebo interfaces.
 		this->provides("gazebo")->addOperation("configure", &UR5RttGazeboComponent::gazeboConfigureHook, this, RTT::ClientThread);
@@ -140,19 +140,16 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 			currPosition.push_back(j);
 			meanTrq.push_back(0);
 			currVelo.push_back(0);
+			meanCollTrq.push_back(0);
 		}
-
-		/*
-		data_file.open("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/test_data.txt");
-		if (!data_file)
-			RTT::log(RTT::Error) << "The file could not be opened." << RTT::endlog();
-		*/
 
 
 		this->addPort("cmdJntTrq", cmdJntTrq_Port);
 		trqCmdOutput = {0.0 , 0.0 ,0.0 ,0.0 ,0.0 , 0.0};
 		this->addPort("trgtPos", trgtPos_Port);
 		this->addPort("compPos" , compPos_Port);
+		this->addPort("newMass" , newMass_Port);
+
 
 		this->addPort("currJntPos", currJntPos_Port);
 		currJntPos_Port.setDataSample(trqCmdOutput);
@@ -164,6 +161,8 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		meanJntTrq_Port.setDataSample(trqCmdOutput);
 		this->addPort("currVelo" , currVelocity_Port);
 		currVelocity_Port.setDataSample(trqCmdOutput);
+		this->addPort("meanCollTrq" , meanCollTrq_Port);
+		meanCollTrq_Port.setDataSample(trqCmdOutput);
 
 		this->addPort("currMass" , currMass_Port);
 		currMass_Port.setDataSample(0);
@@ -188,6 +187,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
+
 		if (cmdJntTrq_Port.connected())
 			cmdJntTrq_Flow = cmdJntTrq_Port.read(trqCmdOutput);
 		if (trgtPos_Port.connected())
@@ -195,17 +195,38 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		if (compPos_Port.connected())
 			compPos_Flow = compPos_Port.read(targetPosition);
 
-			for (unsigned j = 0; j < joints_idx.size(); j++)
-			{
-				gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]);
-			}
 
 
-			sim_id ++;
+		if (newMass_Port.connected())
+		{
+			newMass_Flow = newMass_Port.read(new_mass);
+		}
+
+
+		if (newMass_Flow == RTT::NewData)
+		{
+			curr_mass = new_mass;
+			eeMass(curr_mass, model);
+			RTT::log(RTT::Error) << "New mass set to model" << RTT::endlog();
+		}
+
+		if (trgtPos_Flow == RTT::NewData)
+		{
+			RTT::log(RTT::Error) << "New target position" << RTT::endlog();
+
+			nb_iteration = 0;
+		}
+
+		for (unsigned j = 0; j < joints_idx.size(); j++)
+		{
+			gazebo_joints_[joints_idx[j]]->SetForce(0 , trqCmdOutput[j]);
+		}
+
+
+		sim_id ++;
 
 		nb_iteration++;
 		elm_id ++;
-
 
 
 			if ((elm_id == (10)) ||(elm_id == (20)) ||(elm_id == (30)) ||(elm_id == (40)) ||(elm_id == (50)) ||(elm_id == (60)) ||(elm_id == (70)) ||(elm_id == (80)) ||(elm_id == (90)) || (elm_id == (100)) || (elm_id == (110)) || (elm_id == (120)) || (elm_id == (130)) || (elm_id == (140)) || (elm_id == (150)) || (sim_id == (160)) || (elm_id == (170)) || (elm_id == (180)) || (elm_id == (190)) || (elm_id == 200) ) // To check if position is stable.
@@ -259,9 +280,12 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				}
 			}
 
+		for (unsigned j = 0; j < joints_idx.size(); j++)
+		{
+			currPosition[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
+		}
 
-
-		if ((nb_iteration == 2950) || (nb_iteration == 2960) || (nb_iteration == 2970) || (nb_iteration == 2980) || (nb_iteration == 2990)) // To check if position is stable.
+		if ((nb_iteration == 3410) || (nb_iteration == 3420) || (nb_iteration == 3430) || (nb_iteration == 3440) || (nb_iteration == 3450) || (nb_iteration == 3460) || (nb_iteration == 3470) || (nb_iteration == 3480) || (nb_iteration == 3490) || (nb_iteration == 3500) ) // To check if position is stable.
 		{
 			for (unsigned j = 0; j < joints_idx.size(); j++)
 			{
@@ -272,16 +296,21 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		}
 
 
-		if (nb_iteration >= 3000) // For stabilisation of the torque.
+		if (nb_iteration >= 3500) // For stabilisation of the torque.
 		{
 			nb_iteration = 0;
+			for (unsigned j = 0; j < joints_idx.size(); j++)
+			{
+				// Computing the mean of the torques.
+				meanCollTrq[j] = (std::accumulate((inter_torque[j]).begin(),(inter_torque[j]).end(), 0.0))/10.0;
+				inter_torque[j] = {0};
+			}
+			if (meanCollTrq_Port.connected())
+				meanCollTrq_Port.write(meanCollTrq);
 		}
 
 
-		for (unsigned j = 0; j < joints_idx.size(); j++)
-		{
-			currPosition[j] = model->GetJoints()[joints_idx[j]]->GetAngle(0).Radian();
-		}
+
 
 
 		if (currJntPos_Port.connected()) {

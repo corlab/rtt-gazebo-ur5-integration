@@ -21,15 +21,14 @@ loadComponent("pid_component","PIDController");
 // #######------- lwr_elm_controller : RttELMController -------#######
 loadComponent("elm_component","ELMComponent");
 
+// #######------- lwr_elm_controller : RttDataCollector -------#######
+loadComponent("DataCollector","DataCollector");
+
 setActivity("pid_component",0.0010,99,ORO_SCHED_RT)
 setActivity("elm_component" , 0.0018 , 99 , ORO_SCHED_RT)
-//setActivity("ur5_gazebo",1,1,ORO_SCHED_RT)
+setActivity("DataCollector",0.0010,99,ORO_SCHED_RT)
 
-  //TaskContext* a_task = new MyTask("pid_component");
-  // Set a periodic activity with priority=5, period=1000Hz
- // a_task->setActivity( new Activity( 5, 0.001 ));
-  // ... start the component:
-  //a_task->start(); 
+//setActivity("ur5_gazebo",1,1,ORO_SCHED_RT)
 
 
 // # Connect Controller to Gazebo
@@ -48,14 +47,23 @@ connect("ur5_gazebo.currMass","elm_component.currMass",cp_ctrl_ELM);
 connect("ur5_gazebo.currVelo","elm_component.currVelo",cp_ctrl_ELM);
 connect("ur5_gazebo.currJntPos","elm_component.currJntPos",cp_ctrl_ELM);
 
+var ConnPolicy cp_ctrl_data;
+connect("DataCollector.newMass","ur5_gazebo.newMass",cp_ctrl_data);
+connect("DataCollector.trgtJntPos" , "ur5_gazebo.trgtPos",cp_ctrl_data);
+connect("ur5_gazebo.currJntPos" , "DataCollector.currJntPos",cp_ctrl_data);
+connect("ur5_gazebo.meanCollTrq" , "DataCollector.meanCurrJntTrq",cp_ctrl_data);
+
+
 
 ur5_gazebo.configure()
+DataCollector.configure()
 pid_component.configure()
 elm_component.configure()
 
 
 
 ur5_gazebo.start()
+DataCollector.start()
 pid_component.start()
-elm_component.start()
+// elm_component.start()
 

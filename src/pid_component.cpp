@@ -126,6 +126,7 @@ void PIDController::updateHook() {
 	    	}
 	    }
 
+
 	    if (cmdJntTrq_Port.connected()) {
 	        cmdJntTrq_Port.write(trqCmdOutput);
 	    }

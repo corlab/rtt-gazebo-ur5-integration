@@ -69,6 +69,7 @@ endif()
 ## Default component
 orocos_component(ur5_rtt_gazebo src/ur5_rtt_gazebo_component.cpp src/ur5_rtt_gazebo_component.hpp)
 orocos_component(ur5_pid src/pid_component.cpp src/pid_component.hpp)
+orocos_component(ur5_data src/DataCollector.cpp src/DataCollector.hpp)
 orocos_component(ur5_elm src/ELMComponent.cpp src/ELMComponent.hpp 
 								src/AdaptiveLinearMapping.cpp
                                 src/AdaptiveLinearMapping.h
@@ -87,6 +88,7 @@ orocos_component(ur5_elm src/ELMComponent.cpp src/ELMComponent.hpp
                                 src/VectorMath.h)
 orocos_install_headers(src/ur5_rtt_gazebo_component.hpp)
 orocos_install_headers(src/pid_component.hpp)
+orocos_install_headers(src/DataCollector.hpp)
 orocos_install_headers(src/elm_component.hpp)
 orocos_install_headers(parsertools/KDLParser.hpp)
 set_target_properties(ur5_rtt_gazebo PROPERTIES COMPILE_DEFINITIONS RTT_COMPONENT)
@@ -132,6 +134,21 @@ target_link_libraries(ur5_elm
   ${Boost_LIBRARIES}
   ${NemoMath_LIBRARIES}
   ${RSC_LIBRARIES}
-  ${RCI_LIBRARIES})  
+  ${RCI_LIBRARIES})
+  
+set_target_properties(ur5_data PROPERTIES COMPILE_DEFINITIONS RTT_COMPONENT)
+target_link_libraries(ur5_data 
+  ${orocos_kdl_LIBRARIES} 
+  ${GAZEBO_LIBRARIES} 
+  ${OROCOS-RTT_LIBRARIES}
+  ${OROCOS-RTT_LIBRARIES} 
+  ${OROCOS-RTT_RTT-SCRIPTING_LIBRARY} 
+  ${OROCOS-RTT_RTT-TRANSPORT-CORBA_LIBRARY}
+  ${OROCOS-RTT_TYPEKIT_LIBRARIES}
+  ${USE_OROCOS_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${NemoMath_LIBRARIES}
+  ${RSC_LIBRARIES}
+  ${RCI_LIBRARIES})      
   
 orocos_generate_package()

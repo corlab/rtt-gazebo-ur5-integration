@@ -56,6 +56,11 @@ public:
     RTT::OutputPort<std::vector<double>> meanJntTrq_Port;
     RTT::OutputPort<std::vector<double>> currVelocity_Port;
     RTT::OutputPort<double> currMass_Port;
+    RTT::InputPort<double> newMass_Port;
+    RTT::FlowStatus newMass_Flow;
+    double new_mass;
+    RTT::OutputPort<std::vector<double>> meanCollTrq_Port;
+    std::vector<double> meanCollTrq;
 
     std::vector<double> trqCmdOutput;
     std::vector<double> currPosition;

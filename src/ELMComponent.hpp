@@ -22,7 +22,7 @@
 
 class ELMComponent: public RTT::TaskContext {
 public:
-	ELMComponent(std::string const& name);
+	 ELMComponent(std::string const& name);
 	 bool configureHook();
 	 bool startHook();
 	 void updateHook();
