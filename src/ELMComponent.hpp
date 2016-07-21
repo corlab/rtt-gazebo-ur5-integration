@@ -36,6 +36,9 @@ public:
 	 RTT::InputPort<std::vector<double>> trgtJntPos_Port; // Target value.
 	 RTT::FlowStatus trgtJntPos_Flow;
 
+	 RTT::InputPort<std::vector<double>> currJntPos_Port; // Target value.
+	 RTT::FlowStatus currJntPos_Flow;
+
 	 RTT::InputPort<std::vector<double>> meanJntTrq_Port; // Target value.
 	 RTT::FlowStatus meanJntTrq_Flow;
 
@@ -51,6 +54,7 @@ public:
 	 // Compliancy
 	 std::vector<double> trgtPos;
 	 std::vector<double> dsrPos;
+	 std::vector<double> currPos;
 	 std::vector<double> meanTrq;
 	 std::vector<double> currVelo;
 

@@ -46,6 +46,7 @@ connect("ur5_gazebo.refJntPos","elm_component.trgtJntPos",cp_ctrl_ELM);
 connect("ur5_gazebo.meanJntTrq","elm_component.meanJntTrq",cp_ctrl_ELM);
 connect("ur5_gazebo.currMass","elm_component.currMass",cp_ctrl_ELM);
 connect("ur5_gazebo.currVelo","elm_component.currVelo",cp_ctrl_ELM);
+connect("ur5_gazebo.currJntPos","elm_component.currJntPos",cp_ctrl_ELM);
 
 
 ur5_gazebo.configure()

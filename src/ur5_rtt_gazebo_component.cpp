@@ -252,8 +252,6 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 				if (meanJntTrq_Port.connected())
 				{
 					meanJntTrq_Port.write(meanTrq);
-					RTT::log(RTT::Warning) << "Mean torque sent, elm id: "<<elm_id << RTT::endlog();
-
 				}
 				if (currVelocity_Port.connected())
 				{
@@ -297,9 +295,6 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		if (currJntTrq_Port.connected()) {
 			currJntTrq_Port.write(trqCmdOutput);
 		}
-
-
-//	RTT::log(RTT::Warning) << "GazeboComponent updated. " << RTT::endlog();
 
 	}
 

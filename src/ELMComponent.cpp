@@ -34,6 +34,8 @@ ELMComponent::ELMComponent(std::string const& name) : new_pos(false), RTT::TaskC
 
 	this->addPort("meanJntTrq" , meanJntTrq_Port);
 
+	this->addPort("currJntPos" , currJntPos_Port);
+
 	this->addPort("currMass" , currMass_Port);
 
 	this->addPort("currVelo" , currVelocity_Port);
@@ -65,6 +67,7 @@ bool ELMComponent::configureHook() {
 			thresholds[3].push_back(0);
 			meanTrq.push_back(0);
 			currVelo.push_back(0);
+			currPos.push_back(0);
 		}
 
 
@@ -86,17 +89,17 @@ bool ELMComponent::configureHook() {
 
 	//3 payload
 	thresholds[2][0] = 5;//31;
-	thresholds[2][1] = 2;//12; //12;
+	thresholds[2][1] = 3.0;//12; //12;
 	thresholds[2][2] = 2;//159; //30; // see if smaller could be ok. (if the position difference is not high).
 	thresholds[2][3] = 1;//30;//29;
 	thresholds[2][4] = 1.0;//29;//29; // For mass 5.
 	thresholds[2][5] = 1;//40;// 40;
 
 	// 5 payload
-	thresholds[3][0] = 5;//31;
-	thresholds[3][1] = 4.2;//12; //12;
+	thresholds[3][0] = 8.7;//31;
+	thresholds[3][1] = 4.81;//12; //12;
 	thresholds[3][2] = 2.0;//159; //30; // see if smaller could be ok. (if the position difference is not high).
-	thresholds[3][3] = 1;//30;//29;
+	thresholds[3][3] = 1.3;//30;//29;
 	thresholds[3][4] = 1.5;//29;//29; // For mass 5.
 	thresholds[3][5] = 1;//40;// 40;
 
@@ -135,15 +138,10 @@ void ELMComponent::updateHook(){
 	nb_step ++;
 
 	trgtJntPos_Flow = trgtJntPos_Port.read(trgtPos);
-	for (unsigned j = 0; j < meanTrq.size(); j++)
-	{
-		RTT::log(RTT::Error) << "dsrPOs "<< j << ": " << trgtPos[j] << RTT::endlog();
-
-	}
+	currJntPos_Flow = currJntPos_Port.read(currPos);
 	meanJntTrq_Flow = meanJntTrq_Port.read(meanTrq);
 	currMass_Flow = currMass_Port.read(curr_mass);
 	currVelocity_Flow = currVelocity_Port.read(currVelo);
-
 
 
 	/***************************************************************************************************************************************************/
@@ -154,13 +152,8 @@ void ELMComponent::updateHook(){
 	 */
 
 
-
-
-
 	if (meanJntTrq_Flow == RTT::NewData /*|| currJntPos_Flow == RTT::NewData */)
 	{
-		RTT::log(RTT::Warning) << "ELMComponent received. " << RTT::endlog();
-
 		RealVectorPtr inputdata = RealVector::create(elm_0->getInputDimension(), 0.0);
 		for (int j=0; j<inputdata->getDimension(); j++) inputdata->setValueEquals(j,trgtPos[j]);
 		RealVectorPtr result;
@@ -185,7 +178,7 @@ void ELMComponent::updateHook(){
 		{
 
 			torque_difference[j] = result->getValue(j) - meanTrq[j];
-			RTT::log(RTT::Warning) << "trq_diff "<<j<<": "<<torque_difference[j]<<" meanTrq: "<<meanTrq[j] << RTT::endlog();
+		//	RTT::log(RTT::Warning) << "trq_diff "<<j<<": "<<torque_difference[j]<<" meanTrq: "<<meanTrq[j] << RTT::endlog();
 
 					double curr_threshold;
 					if (curr_mass - 0.0001 == 0)
@@ -208,21 +201,24 @@ void ELMComponent::updateHook(){
 
 					if ((abs(torque_difference[j]) > curr_threshold)&&(std::abs(currVelo[j])< 0.04)&&(nb_step > 8000))
 					{
-						RTT::log(RTT::Warning) << "currVelo "<<j<<": "<<std::abs(currVelo[j])<< RTT::endlog();
 						RTT::log(RTT::Warning) << "dsrPos "<<j<<": "<<trgtPos[j]<< RTT::endlog();
-
 
 						new_pos = true;
 						if (torque_difference[j] > 0)
 						{
-							dsrPos[j] = trgtPos[j] + add_trq[j]*std::abs(torque_difference[j]);
+							dsrPos[j] = trgtPos[j] + add_trq[j]*std::abs(torque_difference[j])*(curr_mass+1)/6.5;
 						}
 						else
 						{
-							dsrPos[j] = trgtPos[j] - add_trq[j]*std::abs(torque_difference[j]);
+							dsrPos[j] = trgtPos[j] - add_trq[j]*std::abs(torque_difference[j])*(curr_mass+1)/6.5;
 						}
-						RTT::log(RTT::Warning) << "new dsrPos "<<j<<": "<<dsrPos[j]<< RTT::endlog();
+						RTT::log(RTT::Warning) << "new dsrPos "<<j<<": "<<dsrPos[j] << "currPos: "<<currPos[j] <<" diff " << std::abs(dsrPos[j] - currPos[j])<< RTT::endlog();
 
+						if (std::abs(dsrPos[j] - currPos[j])>0.009)
+						{
+							dsrPos[j] = currPos[j];
+							RTT::log(RTT::Warning) << "special condition"<< RTT::endlog();
+						}
 					}
 					else
 					{
