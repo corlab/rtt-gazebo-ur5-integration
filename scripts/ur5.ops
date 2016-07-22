@@ -21,7 +21,7 @@ loadComponent("pid_component","PIDController");
 // #######------- lwr_elm_controller : RttELMController -------#######
 loadComponent("elm_component","ELMComponent");
 
-// #######------- lwr_elm_controller : RttDataCollector -------#######
+// #######------- lwr_data_collector : RttDataCollector -------#######
 loadComponent("DataCollector","DataCollector");
 
 setActivity("pid_component",0.0010,99,ORO_SCHED_RT)
@@ -61,7 +61,7 @@ pid_component.configure()
 elm_component.configure()
 
 
-// If data collecting mode, switch off elm_component. If compliance mode, switch off DataCollector componenent
+// If data collecting mode, switch off elm_component. If compliance mode, switch off DataCollector component
 
 ur5_gazebo.start()
 DataCollector.start()
