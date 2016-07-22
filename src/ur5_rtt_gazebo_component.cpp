@@ -30,6 +30,7 @@
 #include <math.h>
 #include <numeric>
 
+
 #include "RealVector.h"
 #include "ExtremeLearningMachine.h"
 
@@ -169,7 +170,6 @@ public:
 					<< idx << RTT::endlog();
 			nb_links++;
 		}
-
 
 
 		if (links_idx.size() == 0) {
@@ -340,7 +340,7 @@ public:
 
 		nb_wait = wait_step;
 
-		curr_mass = 0.0001;
+		curr_mass = 0.00001;
 		// To test guessing of the payload.
 		eeMass(curr_mass, model);
 
@@ -348,6 +348,31 @@ public:
 		mass_id = 4; //  For data recording.
 
 		nearest_mass = 0;
+
+
+		test_force.push_back(gazebo::math::Vector3(-1,0,0));
+		test_force.push_back(gazebo::math::Vector3(1,0,0));
+		test_force.push_back(gazebo::math::Vector3(0,1,0));
+		test_force.push_back(gazebo::math::Vector3(0,-1,0));
+		test_force.push_back(gazebo::math::Vector3(0,0,1));
+		test_force.push_back(gazebo::math::Vector3(0,0,-1));
+		test_force.push_back(gazebo::math::Vector3(1,1,0));
+		test_force.push_back(gazebo::math::Vector3(-1,-1,0));
+		test_force.push_back(gazebo::math::Vector3(1,-1,0));
+		test_force.push_back(gazebo::math::Vector3(-1,1,0));
+		test_force.push_back(gazebo::math::Vector3(1,0,1));
+		test_force.push_back(gazebo::math::Vector3(-1,0,-1));
+		test_force.push_back(gazebo::math::Vector3(1,0,-1));
+		test_force.push_back(gazebo::math::Vector3(-1,0,1));
+		test_force.push_back(gazebo::math::Vector3(0,1,1));
+		test_force.push_back(gazebo::math::Vector3(0,-1,-1));
+		test_force.push_back(gazebo::math::Vector3(0,1,-1));
+		test_force.push_back(gazebo::math::Vector3(0,-1,1));
+		coef = 0;
+		id_force = 17;
+
+		test_offset =  gazebo::math::Vector3(0.025,0,0);
+
 
 		RTT::log(RTT::Warning) << "Configure hook finished." << RTT::endlog();
 
@@ -1052,6 +1077,57 @@ public:
 		}
 		*/
 
+
+		if ((sim_id > 12000) /*&& (sim_id < 14000)*/)
+		{
+			model_links_[links_idx[links_idx.back()]]->AddLinkForce(coef*test_force[id_force],test_offset);
+		}
+
+
+
+
+
+
+			if ((sim_id%6000 == 0)&&(sim_id > 18000))
+			{
+				bool modif = false;
+				for (unsigned j = 0; j < 3; j++)
+				{
+					if (supp_target_value[j] != target_value[j])
+					{
+						modif = true;
+					}
+				}
+				if (modif)
+				{
+					sensibility_file << "{ x: " << test_force[id_force].x << " ; y: " << test_force[id_force].y << " ; z: " << test_force[id_force].z << " ; force: " << (coef*test_force[id_force]).GetLength()<<  " }" << std::endl;
+					//For recording data
+					supp_target_value[0] = 0.1;
+					supp_target_value[1] = -0.1;//-0.1;//-1.15;//-0.3;
+					supp_target_value[2] =  3.14 - (+ supp_target_value[1] + acos(sin(-supp_target_value[1])*l1/l2) + 1.57) - 0.3 -0.4;//0.2;//0.7;//0.2;
+					supp_target_value[3] = -1.4064;
+					supp_target_value[4] = -1.5318;
+					supp_target_value[5] = -0.3283;
+
+
+				target_value[2] = supp_target_value[2];
+				target_value[1] = supp_target_value[1];
+				target_value[0] = supp_target_value[0];
+				target_value[3] = supp_target_value[3];
+				target_value[4] = supp_target_value[4];
+				target_value[5] = supp_target_value[5];
+				id_force ++;
+				coef = 0;
+
+				}
+				else
+				{
+					coef = coef + 0.1;
+					RTT::log(RTT::Warning) << "Force set to "  << coef << RTT::endlog();
+				}
+			}
+
+
 		sim_id ++;
 
 
@@ -1168,6 +1244,11 @@ protected:
 	int elm_step;
 	int mean_trq_step;
 	int nb_measure_trq;
+
+	std::vector<gazebo::math::Vector3> test_force;
+	gazebo::math::Vector3 test_offset;
+	double coef;
+	int id_force;
 
 };
 
