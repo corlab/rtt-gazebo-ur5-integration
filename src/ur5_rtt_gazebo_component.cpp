@@ -30,6 +30,8 @@
 #include <math.h>
 #include <numeric>
 
+#include <string>
+#include <sstream>
 
 #include "RealVector.h"
 #include "ExtremeLearningMachine.h"
@@ -225,7 +227,12 @@ public:
 		if (!sensibility_file)
 			RTT::log(RTT::Error) << "The file could not be open." << RTT::endlog();
 
-		pos_file.open ("names.txt"); // Name to modify
+		pos_file.open ("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/angles.csv"); // Name to modify
+	 //   std::ifstream pos_file("/homes/abalayn/workspace/rtt-gazebo-ur5-integration/angles.csv");
+
+
+
+
 //For recording data
 //	target_value[0] = 5.6;//0;
 //	target_value[1] = -0.1;
@@ -596,26 +603,40 @@ public:
 
 				nb_iteration = 0;
 
+				if (pos_file.is_open())
+				  {
+				    std::string str;
+					std::getline(pos_file, str);
+					RTT::log(RTT::Warning) << "read: "<< str << RTT::endlog();
 
-				for (unsigned j = 0; j < joints_idx.size(); j++)
+
+					    std::stringstream ss(str);
+					    std::vector<double> output;
+					    double i;
+					    while (ss >> i) {
+					        output.push_back(i);
+					        ss.ignore(1);
+					    }
+						RTT::log(RTT::Warning) << "Vector found"<< RTT::endlog();
+
+					    int j = 0;
+					    for (std::vector<double>::const_iterator i = output.begin(); i != output.end(); ++i)
+					    {
+					    	std::cout << *i << ' ';
+							target_value[j] = *i;
+							j = j+1;
+					    }
+						RTT::log(RTT::Warning) << "YAY"<< RTT::endlog();
+
+
+
+				  }
+				else
 				{
-					  if (pos_file.is_open())
-					  {
-					   // while ( getline (pos_file,line) )
-					   // {
-					   //   cout << line << '\n';
-					   // }
-						 string word;
-						 pos_file >> word;
-						 pos_file >> word;
-						 target_value[j] = atof(word.c_str());
-
-					  }
-
-					  else cout << "Unable to open file";
-
-					target_value[j] = 10; // To modify
+					RTT::log(RTT::Warning) << "Unable to open file"<< RTT::endlog();
 				}
+
+
 
 
 
