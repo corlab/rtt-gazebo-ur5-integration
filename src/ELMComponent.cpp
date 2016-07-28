@@ -88,20 +88,20 @@ bool ELMComponent::configureHook() {
 	thresholds[1][5] = 0.2;
 
 	//3 payload
-	thresholds[2][0] = 5.2;//31;
-	thresholds[2][1] = 5.5;//12; //12;
-	thresholds[2][2] = 2;//159; //30; // see if smaller could be ok. (if the position difference is not high).
-	thresholds[2][3] = 1;//30;//29;
-	thresholds[2][4] = 0.6;//1.0;//29;//29; // For mass 5.
-	thresholds[2][5] = 0.3;//1;//40;// 40;
+	thresholds[2][0] = 5.2;
+	thresholds[2][1] = 5.5;
+	thresholds[2][2] = 2;
+	thresholds[2][3] = 1;
+	thresholds[2][4] = 0.6;
+	thresholds[2][5] = 0.3;
 
 	// 5 payload
-	thresholds[3][0] = 6;//31;
-	thresholds[3][1] = 6;//12; //12;
-	thresholds[3][2] = 2.5;//159; //30; // see if smaller could be ok. (if the position difference is not high).
-	thresholds[3][3] = 1.3;//30;//29;
-	thresholds[3][4] = 1;//29;//29; // For mass 5.
-	thresholds[3][5] = 0.5;//40;// 40;
+	thresholds[3][0] = 6;
+	thresholds[3][1] = 6;
+	thresholds[3][2] = 2.5;
+	thresholds[3][3] = 1.3;
+	thresholds[3][4] = 1;
+	thresholds[3][5] = 0.5;
 
 	add_trq[0] = 0.01/4.0;
 	add_trq[1] = 0.01/4.0;
