@@ -170,7 +170,7 @@ UR5RttGazeboComponent::UR5RttGazeboComponent(std::string const& name) :
 		RTT::log(RTT::Warning) << "Port added. " << RTT::endlog();
 
 
-		targetPosition = { 0 , -0.1 , 3.14 - (+ -0.1 + acos(sin(0.1)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
+		targetPosition = { 0 , -0.5 , 3.14 - (+ -0.1 + acos(sin(0.1)*l1/l2) + 1.57) - 0.3 -0.4 , -3.14 , -1.4 , -1.57};
 
 
 		RTT::log(RTT::Warning) << "Configure hook finished. " << RTT::endlog();

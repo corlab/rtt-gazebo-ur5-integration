@@ -72,36 +72,36 @@ bool ELMComponent::configureHook() {
 
 
 	// 0 payload
-	thresholds[0][0] = 4;//31;
-	thresholds[0][1] = 1.6;//12; //12;
-	thresholds[0][2] = 1.0;//159; //30; // see if smaller could be ok. (if the position difference is not high).
-	thresholds[0][3] = 1;//30;//29;
-	thresholds[0][4] = 1.0;//29;//29; // For mass 5.
-	thresholds[0][5] = 1;//40;// 40;
+	thresholds[0][0] = 4.5;
+	thresholds[0][1] = 2.7;
+	thresholds[0][2] = 1.0;
+	thresholds[0][3] = 0.5;
+	thresholds[0][4] = 0.3;
+	thresholds[0][5] = 0.2;
 
 	// 1 payload
-	thresholds[1][0] = 5.2;//31;
-	thresholds[1][1] = 3.4;//4.5;//7;//12; //12;
-	thresholds[1][2] = 1.0;//4.5;//6.1;//159; //30; // see if smaller could be ok. (if the position difference is not high).
-	thresholds[1][3] = 2.4;//30;//29;
-	thresholds[1][4] = 1.0;//29;//29; // For mass 5.
-	thresholds[1][5] = 1;//40;// 40;
+	thresholds[1][0] = 5.2;
+	thresholds[1][1] = 3.5;
+	thresholds[1][2] = 1.2;
+	thresholds[1][3] = 0.7;
+	thresholds[1][4] = 0.4;
+	thresholds[1][5] = 0.2;
 
 	//3 payload
-	thresholds[2][0] = 5;//31;
-	thresholds[2][1] = 3.0;//12; //12;
+	thresholds[2][0] = 5.2;//31;
+	thresholds[2][1] = 5.5;//12; //12;
 	thresholds[2][2] = 2;//159; //30; // see if smaller could be ok. (if the position difference is not high).
 	thresholds[2][3] = 1;//30;//29;
-	thresholds[2][4] = 1.0;//29;//29; // For mass 5.
-	thresholds[2][5] = 1;//40;// 40;
+	thresholds[2][4] = 0.6;//1.0;//29;//29; // For mass 5.
+	thresholds[2][5] = 0.3;//1;//40;// 40;
 
 	// 5 payload
-	thresholds[3][0] = 8.7;//31;
-	thresholds[3][1] = 4.81;//12; //12;
-	thresholds[3][2] = 2.0;//159; //30; // see if smaller could be ok. (if the position difference is not high).
+	thresholds[3][0] = 6;//31;
+	thresholds[3][1] = 6;//12; //12;
+	thresholds[3][2] = 2.5;//159; //30; // see if smaller could be ok. (if the position difference is not high).
 	thresholds[3][3] = 1.3;//30;//29;
-	thresholds[3][4] = 1.5;//29;//29; // For mass 5.
-	thresholds[3][5] = 1;//40;// 40;
+	thresholds[3][4] = 1;//29;//29; // For mass 5.
+	thresholds[3][5] = 0.5;//40;// 40;
 
 	add_trq[0] = 0.01/4.0;
 	add_trq[1] = 0.01/4.0;
@@ -178,10 +178,10 @@ void ELMComponent::updateHook(){
 		{
 
 			torque_difference[j] = result->getValue(j) - meanTrq[j];
-		//	RTT::log(RTT::Warning) << "trq_diff "<<j<<": "<<torque_difference[j]<<" meanTrq: "<<meanTrq[j] << RTT::endlog();
+			RTT::log(RTT::Warning) << "trq_diff "<<j<<": "<<torque_difference[j]<<" meanTrq: "<<meanTrq[j] << RTT::endlog();
 
 					double curr_threshold;
-					if (curr_mass - 0.0001 == 0)
+					if (curr_mass == 0)
 					{
 						curr_threshold = thresholds[0][j];
 					}
