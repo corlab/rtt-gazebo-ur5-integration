@@ -637,24 +637,7 @@ public:
 				}
 
 
-
-
-
 			}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -726,21 +709,9 @@ public:
 //
 
 
-
-	/***************************************************************************************************************************************************/
-
-
-
-	/***************************************************************************************************************************************************/
 	/*
 	 * Compliance of the robot.
 	 */
-
-
-
-
-
-
 
 
 
@@ -1137,15 +1108,7 @@ public:
 				last_error[j] = error_value[j];
 				pid_it = 0;
 
-			//	RTT::log(RTT::Error) << j << " " << error_value[j] << "  " << control_value[j] << "  " << errorI[j] << RTT::endlog() ;
 			}
-
-			//	error_file << "cmd 1 " << control_value[1]  << std::endl ;
-
-
-		// For tuning PID.
-		//RTT::log(RTT::Error) << "Ki " << Kd[1]  << " agl0 "	<< model->GetJoints()[joints_idx[0]]->GetAngle(0).Radian() <<" trg_agl1 "	<<target_value[1] <<  " agl1 "	<< model->GetJoints()[joints_idx[1]]->GetAngle(0).Radian() <<  " trg_agl2 "	<<target_value[2] << " agl2 "	<< model->GetJoints()[joints_idx[2]]->GetAngle(0).Radian() << RTT::endlog();
-
 		}
 
 		for (unsigned j = 0; j < joints_idx.size(); j++)
@@ -1156,40 +1119,13 @@ public:
 		/***************************************************************************************************************************************************/
 
 
-		/*
-		 * Test for mass modification at the end-effector.
-		 */
-
-		/*
-		if (sim_id == 8000)
-		{
-			eeMass(5.0 , model);
-			RTT::log(RTT::Error) << "Mass set to 5 " << RTT::endlog() ;
-		}
-		if (sim_id == 12000)
-		{
-			RTT::log(RTT::Error) << "Mass set to 1 " << RTT::endlog() ;
-			eeMass(1.0 , model);
-		}
-		if (sim_id == 16000)
-		{
-			RTT::log(RTT::Error) << "Mass set to 0 " << RTT::endlog() ;
-			eeMass(0.001 , model);
-		}
-		*/
-//
-//
 		// Sensibility in "3D"
+
 //		if ((sim_id > 12000))
 //		{
 //			model_links_[links_idx[links_idx.back()]]->AddLinkForce(coef*test_force[id_force],test_offset);
 //		//	model_links_[links_idx[links_idx.back()]]->AddLinkForce(0.5*gazebo::math::Vector3(0,0,-1),test_offset);
 //		}
-//
-//
-//
-//
-//
 //
 //			if ((sim_id%6000 == 0)&&(sim_id > 18000))
 //			{
@@ -1249,8 +1185,6 @@ public:
 
 protected:
 
-	//! Synchronization ??
-
 	// File where data are written.
 	std::ofstream data_file;
 	std::ofstream error_file;
@@ -1272,7 +1206,6 @@ protected:
 	std::vector<int> joints_idx;
 	std::vector<int> links_idx;
 
-
 	std::vector<gazebo::physics::JointPtr> gazebo_joints_;
 	gazebo::physics::Link_V model_links_;
 	std::vector<std::string> joint_names_;
@@ -1283,7 +1216,6 @@ protected:
 
 	double l1; // length of link1
 	double l2;  // length of link2
-
 
 	// For recording data randomly.
 	std::vector<double> jnt_it;
@@ -1306,7 +1238,6 @@ protected:
 	std::vector<double> errorI;
 	std::vector<double> error_derivative;
 	std::vector<double> supp_target_value;
-
 
 	int pid_it;
 
@@ -1332,7 +1263,6 @@ protected:
 	double trq1;
 	double trq2;
 
-
 	// Variable to save intermediate robot position - to decide if the data will be written in the file.
 	std::vector< std::vector<double> > inter_torque_elm;
 
@@ -1352,7 +1282,6 @@ protected:
 	gazebo::math::Vector3 test_offset;
 	double coef;
 	int id_force;
-
 
 	// Read position file
 	ifstream pos_file;
